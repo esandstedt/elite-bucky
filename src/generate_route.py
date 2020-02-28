@@ -84,9 +84,6 @@ def run(db):
         neighbors = galaxy.get_neighbors(current, jump_range)
         for neighbor in neighbors:
 
-            if neighbor.distance_to_neutron is None:
-                continue
-
             dist = current.dist(neighbor)
             g_score = g[current.id]
 
