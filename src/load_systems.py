@@ -1,50 +1,63 @@
-import gzip, json, mysql.connector
+import gzip
+import json
+import mysql.connector
+
+
+def get_existing_system_ids(cursor):
+    cursor.execute(
+        "SELECT `id` FROM `system`"
+    )
+    return set([x[0] for x in cursor.fetchall()])
+
 
 def enumerate_systems(file_path):
-  with gzip.open(file_path) as input_file:
-    for line in input_file:
-      try: 
-        data = line.strip()[:-1]
-        yield json.loads(data)
-      except json.decoder.JSONDecodeError:
-        pass
+    with gzip.open(file_path) as input_file:
+        for line in input_file:
+            try:
+                data = line.strip()[:-1]
+                yield json.loads(data)
+            except json.decoder.JSONDecodeError:
+                pass
 
-def run(db, systems):
-  cursor = db.cursor()
-  c = 0
-  d = 0
-  for system in systems:
-    c += 1
 
-    id = system["id64"]
-    name = system["name"]
-    x = system["coords"]["x"]
-    y = system["coords"]["y"]
-    z = system["coords"]["z"]
+def run(cursor, systems):
+    existing_ids = get_existing_system_ids(cursor)
 
-    # Filter out systems that won't help with the SagA* route
-    if x<-5000 or 5000<x or y<-5000 or 5000<y or z<-1000 or 27000<z:
-      continue
+    c = 0
+    d = 0
+    for system in systems:
+        c += 1
 
-    d += 1
+        id = system["id64"]
+        name = system["name"]
+        x = system["coords"]["x"]
+        y = system["coords"]["y"]
+        z = system["coords"]["z"]
 
-    cursor.execute(
-      "INSERT IGNORE INTO `system`(`id`,`name`,`x`,`y`,`z`) VALUES (%s,%s,%s,%s,%s)",
-      (id, name, x, y, z)
+        if id in existing_ids:
+            continue
+
+        d += 1
+
+        cursor.execute(
+            "INSERT IGNORE INTO `system`(`id`,`name`,`x`,`y`,`z`) VALUES (%s,%s,%s,%s,%s)",
+            (id, name, x, y, z)
+        )
+
+        if d % 1000 == 0:
+            print("%9d %9d %s" % (c, d, name))
+            db.commit()
+    db.commit()
+
+
+if __name__ == "__main__":
+    db = mysql.connector.connect(
+        host="localhost",
+        user="elite",
+        passwd="elite",
+        database="elite"
     )
-
-    if d%1000 == 0:
-      print("%9d %9d %s" % (c, d, name))
-      db.commit()
-  db.commit()
-
-if __name__=="__main__":
-  run(
-    mysql.connector.connect(
-      host="localhost",
-      user="elite",
-      passwd="elite",
-      database="elite"
-    ),
-    enumerate_systems("./data/systemsWithCoordinates.json.gz")
-  )
+    run(
+        db.cursor(),
+        enumerate_systems("./data/systemsWithCoordinates.json.gz")
+    )
