@@ -75,13 +75,13 @@ def run(db):
         if current.distance_to_neutron is not None:
             jump_range = 4 * base_jump_range
 
-        if dist < 500:
+        if dist < jump_range:
             print()
             for line in reconstruct_path(current):
                 print(line)
             break
 
-        neighbors = galaxy.get_neighbors(current, 500)
+        neighbors = galaxy.get_neighbors(current, jump_range)
         for neighbor in neighbors:
 
             if neighbor.distance_to_neutron is None:

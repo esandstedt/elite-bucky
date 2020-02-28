@@ -9,7 +9,7 @@ WHERE `sectorX`=%s
   AND `sectorZ`=%s
   AND (
        (`distanceToNeutron` IS NOT NULL AND `distanceToNeutron` < 500)
-    OR (`distanceToScoopable` IS NOT NULL AND `distanceToScoopable` < 500 AND FALSE)
+    OR (`distanceToScoopable` IS NOT NULL AND `distanceToScoopable` < 500)
   )
 """
 
