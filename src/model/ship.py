@@ -39,7 +39,7 @@ class Ship:
         # this algorithm can't handle restrictions when at low fuel so use the nuclear option
         # returns non-zero to avoid divide by zero issues
         if fuel < self.max_fuel_per_jump:
-            return self.guardian_bonus + 1
+            return 1
 
         m = self.optimised_mass / (self.dry_mass + self.cargo_mass + fuel)
         f = self.max_fuel_per_jump / self.fsd_fuel_multiplier
@@ -47,6 +47,9 @@ class Ship:
 
     def get_fuel_cost(self, distance, fuel):
         max_jump_range = self.get_max_jump_range(fuel)
+
+        if max_jump_range == 1:
+            return 0
 
         r = max_jump_range - self.guardian_bonus
         n = (self.dry_mass + self.cargo_mass + fuel) * distance * r
