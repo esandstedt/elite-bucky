@@ -8,7 +8,7 @@ from model.galaxy import Galaxy
 from model.ship import Ship
 
 
-ship = Ship("DSV Phoenix", 578, 4, 64, "6A", 8, 2902, 10.5)
+ship = Ship("DSV Phoenix", 578, 4, 64, "6A", 8, 2902, 10.5, 1.245)
 
 
 class OpenQueue:
@@ -34,18 +34,77 @@ class OpenContext:
         self.fuel = fuel
 
 
+class CameFromContext:
+    def __init__(self, star, refuel):
+        self.star = star
+        self.refuel = refuel
+
+
+def reconstruct_path(came_from, goal, star):
+    path = [star.name, goal.name]
+    id = star.id
+    while id in came_from:
+        ctx = came_from[id]
+        star = ctx.star
+        types = []
+        if star.distance_to_neutron is not None:
+            types.append("NS")
+        if ctx.refuel:
+            types.append("SC")
+
+        path.insert(0, "%s [%d,%d,%d;%s]" %
+                    (star.name, star.x, star.y, star.z, ",".join(types)))
+        id = ctx.star.id
+    return path
+
+
+def handle_neighbors(came_from, g, f, h, open_queue, ctx, neighbors, refuel):
+    current = ctx.star
+    fuel = ctx.fuel if not refuel else ship.fuel_capacity
+    jump_range = ship.get_max_jump_range(fuel)
+
+    for neighbor in neighbors:
+
+        dist = current.dist(neighbor)
+
+        num_of_jumps = 0
+        if current.distance_to_neutron is not None:
+            num_of_jumps = max(1, math.ceil(dist / jump_range) - 3)
+        else:
+            num_of_jumps = math.ceil(dist / jump_range)
+
+        g_score = g[current.id] + num_of_jumps
+
+        if g_score < g[neighbor.id]:
+            came_from[neighbor.id] = CameFromContext(current, refuel)
+            g[neighbor.id] = g_score
+            f_score = g_score + h(neighbor)
+            f[neighbor.id] = f_score
+
+            new_fuel = 0
+            if num_of_jumps == 1:
+                fuel_cost = ship.get_fuel_cost(dist, fuel)
+                new_fuel = fuel - fuel_cost
+            else:
+                new_fuel = ship.fuel_capacity - ship.max_fuel_per_jump
+
+            open_queue.add(OpenContext(neighbor, new_fuel), f_score)
+
+
 def run(db):
     time_start = time.time()
 
     galaxy = Galaxy(db)
     base_jump_range = ship.get_max_jump_range()
 
-    start = Star(-1, "Sol", 0, 0, 0, None, None)
+    star_colonia = Star(-1, "Colonia", -9530, -910, 19808)
+    star_omega_mining = Star(-1, "Omega Sector VE-Q b5-15",
+                             -1444, -85, 5319)
+    star_rohini = Star(-1, "Rohini", -3374, -47, 6912)
+    star_sol = Star(-1, "Sol", 0, 0, 0)
 
-    # Omega Mining Operation
-    goal = Star(-1, "Omega Sector VE-Q b5-15", -
-                1444.3125, -85.8125, 5319.9375, None, None)
-    #goal = Star(-1, "Colonia", -9530.5, -910.28125, 19808.125, None, None)
+    start = star_omega_mining
+    goal = star_rohini
 
     lowest_dist_to_goal = start.dist(goal)
 
@@ -53,15 +112,6 @@ def run(db):
 
     # came_from[n] is the node immediately preceding it on the cheapest path currently known
     came_from = {}
-
-    def reconstruct_path(star):
-        path = [star.name, goal.name]
-        id = star.id
-        while id in came_from:
-            star = came_from[id]
-            path.insert(0, star.name)
-            id = star.id
-        return path
 
     # g[n] is the cost of the cheapest path from start to n currently known
     g = defaultdict(lambda: 1000000)
@@ -72,7 +122,7 @@ def run(db):
     f[start.id] = h(start)
 
     open_queue = OpenQueue()
-    open_queue.add(OpenContext(start, -1), f[start.id])
+    open_queue.add(OpenContext(start, ship.fuel_capacity), f[start.id])
 
     while open_queue.any():
         [f_score, ctx] = open_queue.pop()
@@ -87,32 +137,21 @@ def run(db):
         print("%7d %4.3f %5d %5d" %
               (len(open_queue), f[current.id], lowest_dist_to_goal, dist))
 
-        jump_range = base_jump_range
-        if current.distance_to_neutron is not None:
-            jump_range = 4 * base_jump_range
-
         if dist < 500:
             print()
-            for line in reconstruct_path(current):
+            for line in reconstruct_path(came_from, goal, current):
                 print(line)
             break
 
         neighbors = galaxy.get_neighbors(current, 500)
-        for neighbor in neighbors:
+        handle_neighbors(
+            came_from, g, f, h, open_queue, ctx, neighbors, False
+        )
 
-            dist = current.dist(neighbor)
-            g_score = g[current.id]
-
-            if current.distance_to_neutron is not None:
-                g_score += max(1, math.ceil(dist / base_jump_range) - 3)
-            else:
-                g_score += math.ceil(dist / base_jump_range)
-
-            if g_score < g[neighbor.id]:
-                came_from[neighbor.id] = current
-                g[neighbor.id] = g_score
-                f[neighbor.id] = g_score + h(neighbor)
-                open_queue.add(OpenContext(neighbor, -1), f[neighbor.id])
+        if current.distance_to_scoopable is not None:
+            handle_neighbors(
+                came_from, g, f, h, open_queue, ctx, neighbors, True
+            )
 
     time_end = time.time()
 

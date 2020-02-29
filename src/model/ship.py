@@ -19,7 +19,7 @@ FUEL_MULTIPLIERS = {
 
 
 class Ship:
-    def __init__(self, name, dry_mass, cargo_mass, fuel_capacity, fsd, max_fuel_per_jump, optimised_mass, guardian_bonus):
+    def __init__(self, name, dry_mass, cargo_mass, fuel_capacity, fsd, max_fuel_per_jump, optimised_mass, guardian_bonus, fuel_scoop_rate):
         self.name = name
         self.dry_mass = dry_mass
         self.cargo_mass = cargo_mass
@@ -30,10 +30,16 @@ class Ship:
         self.max_fuel_per_jump = max_fuel_per_jump
         self.optimised_mass = optimised_mass
         self.guardian_bonus = guardian_bonus
+        self.fuel_scoop_rate = fuel_scoop_rate
 
     def get_max_jump_range(self, fuel=None):
         if fuel is None:
             fuel = self.fuel_capacity
+
+        # this algorithm can't handle restrictions when at low fuel so use the nuclear option
+        # returns one to avoid divide by zero issues
+        if fuel < self.max_fuel_per_jump:
+            return 1
 
         m = self.optimised_mass / (self.dry_mass + self.cargo_mass + fuel)
         f = self.max_fuel_per_jump / self.fsd_fuel_multiplier
