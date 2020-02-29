@@ -39,7 +39,6 @@ def run(db):
 
     galaxy = Galaxy(db)
     base_jump_range = ship.get_max_jump_range()
-    print(base_jump_range)
 
     start = Star(-1, "Sol", 0, 0, 0, None, None)
 
