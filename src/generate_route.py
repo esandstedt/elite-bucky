@@ -5,14 +5,18 @@ import time
 from collections import defaultdict
 from model.star import Star
 from model.galaxy import Galaxy
+from model.ship import Ship
+
+
+ship = Ship("DSV Phoenix", 578, 4, 64, "6A", 8, 2902, 10.5)
 
 
 class OpenQueue:
     def __init__(self):
         self._heap = []
 
-    def add(self, star, f_score):
-        heapq.heappush(self._heap, [f_score, star])
+    def add(self, ctx, weight):
+        heapq.heappush(self._heap, [weight, ctx])
 
     def any(self):
         return len(self._heap) != 0
@@ -24,14 +28,26 @@ class OpenQueue:
         return len(self._heap)
 
 
+class OpenContext:
+    def __init__(self, star, fuel):
+        self.star = star
+        self.fuel = fuel
+
+
 def run(db):
     time_start = time.time()
 
     galaxy = Galaxy(db)
-    base_jump_range = 65
+    base_jump_range = ship.get_max_jump_range()
+    print(base_jump_range)
 
     start = Star(-1, "Sol", 0, 0, 0, None, None)
-    goal = Star(-1, "Colonia", -9530.5, -910.28125, 19808.125, None, None)
+
+    # Omega Mining Operation
+    goal = Star(-1, "Omega Sector VE-Q b5-15", -
+                1444.3125, -85.8125, 5319.9375, None, None)
+    #goal = Star(-1, "Colonia", -9530.5, -910.28125, 19808.125, None, None)
+
     lowest_dist_to_goal = start.dist(goal)
 
     def h(star): return star.dist(goal)/(4*base_jump_range)
@@ -57,10 +73,11 @@ def run(db):
     f[start.id] = h(start)
 
     open_queue = OpenQueue()
-    open_queue.add(start, f[start.id])
+    open_queue.add(OpenContext(start, -1), f[start.id])
 
     while open_queue.any():
-        [f_score, current] = open_queue.pop()
+        [f_score, ctx] = open_queue.pop()
+        current = ctx.star
 
         # a better route has been found already
         if f[current.id] < f_score:
@@ -75,13 +92,13 @@ def run(db):
         if current.distance_to_neutron is not None:
             jump_range = 4 * base_jump_range
 
-        if dist < jump_range:
+        if dist < 500:
             print()
             for line in reconstruct_path(current):
                 print(line)
             break
 
-        neighbors = galaxy.get_neighbors(current, jump_range)
+        neighbors = galaxy.get_neighbors(current, 500)
         for neighbor in neighbors:
 
             dist = current.dist(neighbor)
@@ -96,7 +113,7 @@ def run(db):
                 came_from[neighbor.id] = current
                 g[neighbor.id] = g_score
                 f[neighbor.id] = g_score + h(neighbor)
-                open_queue.add(neighbor, f[neighbor.id])
+                open_queue.add(OpenContext(neighbor, -1), f[neighbor.id])
 
     time_end = time.time()
 
