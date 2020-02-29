@@ -1,3 +1,4 @@
+import itertools
 from scipy.spatial import KDTree
 from model.star import Star
 
@@ -29,7 +30,7 @@ class Tree:
         else:
             indexes = self._tree.query_ball_point(
                 [star.x, star.y, star.z], dist)
-            return [self._list[i] for i in indexes]
+            return [self._list[i] for i in indexes if self._list[i] is not star]
 
     def __len__(self):
         return len(self._list)
@@ -42,12 +43,18 @@ class Sector:
             QUERY,
             (x, y, z)
         )
-        stars = [Star(*row) for row in cursor.fetchall()]
+        all_stars = [Star(*row) for row in cursor.fetchall()]
+        all_tree = Tree(all_stars)
 
         neutron_stars = [
-            star for star in stars if star.distance_to_neutron is not None
+            star for star in all_stars if star.distance_to_neutron is not None
         ]
-        self._tree = Tree(neutron_stars)
+        neutron_star_neighbors = list(itertools.chain.from_iterable(
+            [all_tree.get_neighbors(star, 20) for star in neutron_stars]
+        ))
+
+        stars = list(set(neutron_stars + neutron_star_neighbors))
+        self._tree = Tree(stars)
 
         print("Sector: [%3d:%3d:%3d] %d" % (x, y, z, len(self._tree),))
 
