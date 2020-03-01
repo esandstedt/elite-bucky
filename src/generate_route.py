@@ -35,9 +35,9 @@ class OpenContext:
 
 
 class CameFromContext:
-    def __init__(self, star, fuel):
+    def __init__(self, star, refuel):
         self.star = star
-        self.fuel = fuel
+        self.refuel = refuel
 
 
 def reconstruct_path(came_from, star):
@@ -46,31 +46,24 @@ def reconstruct_path(came_from, star):
     while id in came_from:
         ctx = came_from[id]
         star = ctx.star
-        fuel = ctx.fuel
+        refuel = ctx.refuel
 
         types = []
         if star.distance_to_neutron is not None:
             types.append("NS")
-        # if ctx.refuel:
-        #    types.append("SC")
+        if refuel:
+            types.append("SC")
 
         path.insert(0, "%s [%.2f,%.2f,%.2f;%s]" %
                     (star.name, star.x, star.y, star.z, ",".join(types)))
-
-        if fuel == ship.fuel_capacity:
-            path.insert(0, "Refuel [%.2f,%.2f,%.2f;SC]" %
-                        (star.x, star.y, star.z))
 
         id = ctx.star.id
     return path
 
 
-def handle_neighbors(came_from, g, f, h, open_queue, ctx, neighbors):
+def handle_neighbors(came_from, g, f, h, open_queue, ctx, neighbors, refuel):
     current = ctx.star
-    fuel = ctx.fuel
-    if fuel < ship.max_fuel_per_jump:
-        fuel = ship.fuel_capacity
-
+    fuel = ctx.fuel if not refuel else ship.fuel_capacity
     jump_range = ship.get_max_jump_range(fuel)
 
     if jump_range == 0:
@@ -86,10 +79,14 @@ def handle_neighbors(came_from, g, f, h, open_queue, ctx, neighbors):
         remaining_dist = max(0, dist - jump_range)
         num_of_jumps = 1 + math.ceil(remaining_dist / remaining_jump_range)
 
-        g_score = g[current.id] + num_of_jumps
+        refuel_penalty = 0
+        if refuel or num_of_jumps > 1:
+            refuel_penalty = 0.5
+
+        g_score = g[current.id] + num_of_jumps + refuel_penalty
 
         if g_score < g[neighbor.id]:
-            came_from[neighbor.id] = CameFromContext(current, fuel)
+            came_from[neighbor.id] = CameFromContext(current, refuel)
             g[neighbor.id] = g_score
             f_score = g_score + h(neighbor)
             f[neighbor.id] = f_score
@@ -123,8 +120,8 @@ def run(db):
     star_sagittarius = Star(5, "Sagittarius A*", 25, -20, 25899)
     star_sol = Star(6, "Sol", 0, 0, 0)
 
-    start = star_rohini
-    goal = star_sacaqawea
+    start = star_sol
+    goal = star_sagittarius
 
     lowest_dist_to_goal = start.dist(goal)
 
@@ -163,14 +160,23 @@ def run(db):
                 print(line)
             break
 
+        # direct route to goal
         handle_neighbors(
-            came_from, g, f, h, open_queue, ctx, [goal]
+            came_from, g, f, h, open_queue, ctx, [goal], False
         )
 
         neighbors = galaxy.get_neighbors(current, 500)
+
+        # neighbors without refueling
         handle_neighbors(
-            came_from, g, f, h, open_queue, ctx, neighbors
+            came_from, g, f, h, open_queue, ctx, neighbors, False
         )
+
+        # neighbors with refueling
+        if current.distance_to_scoopable is not None:
+            handle_neighbors(
+                came_from, g, f, h, open_queue, ctx, neighbors, True
+            )
 
     time_end = time.time()
 
