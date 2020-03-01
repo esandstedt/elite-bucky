@@ -81,7 +81,7 @@ def handle_neighbors(came_from, g, f, h, open_queue, ctx, neighbors, refuel):
 
         refuel_penalty = 0
         if refuel or num_of_jumps > 1:
-            refuel_penalty = 0.5
+            refuel_penalty = 1.5
 
         g_score = g[current.id] + num_of_jumps + refuel_penalty
 
@@ -113,6 +113,7 @@ def run(db):
     base_jump_range = ship.get_max_jump_range()
 
     star_colonia = Star(1, "Colonia", -9530, -910, 19808)
+    star_hillary_depot = Star(7, "Blu Thua AI-A c14-10", -54, 149, 2099)
     star_omega_mining = Star(2, "Omega Sector VE-Q b5-15",
                              -1444, -85, 5319)
     star_rohini = Star(3, "Rohini", -3374, -47, 6912)
@@ -120,8 +121,8 @@ def run(db):
     star_sagittarius = Star(5, "Sagittarius A*", 25, -20, 25899)
     star_sol = Star(6, "Sol", 0, 0, 0)
 
-    start = star_sol
-    goal = star_sagittarius
+    start = Star(8, "Froarks GM-D d12-355", -533, 209, 15375)
+    goal = Star(9, "Prielea IC-M d7-130", -1022, 60, 8583)
 
     lowest_dist_to_goal = start.dist(goal)
 
