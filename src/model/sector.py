@@ -53,7 +53,7 @@ class Sector:
             filter(
                 lambda star: star.distance_to_scoopable is not None,
                 itertools.chain.from_iterable(
-                    [all_tree.get_neighbors(star, 30) for star in neutron_stars])
+                    [all_tree.get_neighbors(star, 15) for star in neutron_stars])
             )
         )
 
