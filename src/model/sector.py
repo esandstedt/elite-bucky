@@ -49,11 +49,15 @@ class Sector:
         neutron_stars = [
             star for star in all_stars if star.distance_to_neutron is not None
         ]
-        neutron_star_neighbors = list(itertools.chain.from_iterable(
-            [all_tree.get_neighbors(star, 20) for star in neutron_stars]
-        ))
+        neutron_star_scoopable_neighbors = list(
+            filter(
+                lambda star: star.distance_to_scoopable is not None,
+                itertools.chain.from_iterable(
+                    [all_tree.get_neighbors(star, 30) for star in neutron_stars])
+            )
+        )
 
-        stars = list(set(neutron_stars + neutron_star_neighbors))
+        stars = list(set(neutron_stars + neutron_star_scoopable_neighbors))
         self._tree = Tree(stars)
 
         print("Sector: [%3d:%3d:%3d] %d" % (x, y, z, len(self._tree),))
