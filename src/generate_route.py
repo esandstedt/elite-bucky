@@ -33,6 +33,9 @@ class OpenContext:
         self.star = star
         self.fuel = fuel
 
+    def __lt__(self, other):
+        return self.star.id < other.star.id
+
 
 class CameFromContext:
     def __init__(self, star, refuel):
@@ -121,8 +124,11 @@ def run(db):
     star_sagittarius = Star(5, "Sagittarius A*", 25, -20, 25899)
     star_sol = Star(6, "Sol", 0, 0, 0)
 
-    start = Star(8, "Froarks GM-D d12-355", -533, 209, 15375)
-    goal = Star(9, "Prielea IC-M d7-130", -1022, 60, 8583)
+    #start = Star(8, "Froarks GM-D d12-355", -533, 209, 15375)
+    #goal = Star(9, "Prielea IC-M d7-130", -1022, 60, 8583)
+
+    start = star_sol
+    goal = star_sagittarius
 
     lowest_dist_to_goal = start.dist(goal)
 
