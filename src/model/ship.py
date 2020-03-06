@@ -19,7 +19,7 @@ FUEL_MULTIPLIERS = {
 
 
 class Ship:
-    def __init__(self, name, dry_mass, cargo_mass, fuel_capacity, fsd, max_fuel_per_jump, optimised_mass, guardian_bonus, fuel_scoop_rate):
+    def __init__(self, name, dry_mass, cargo_mass, fuel_capacity, fsd, max_fuel_per_jump, optimised_mass, guardian_bonus):
         self.name = name
         self.dry_mass = dry_mass
         self.cargo_mass = cargo_mass
@@ -30,7 +30,6 @@ class Ship:
         self.max_fuel_per_jump = max_fuel_per_jump
         self.optimised_mass = optimised_mass
         self.guardian_bonus = guardian_bonus
-        self.fuel_scoop_rate = fuel_scoop_rate
 
     def get_max_jump_range(self, fuel=None):
         if fuel is None:
