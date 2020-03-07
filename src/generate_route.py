@@ -41,12 +41,22 @@ class Context:
 
 
 def reconstruct_path(came_from, ctx):
-    path = [ctx.star.name]
+    path = [ctx]
     id = ctx.id
     while id in came_from:
         ctx = came_from[id]
+        path.append(ctx)
+        id = ctx.id
+    return reversed(path)
+
+
+def print_path(path):
+    for ctx in path:
         star = ctx.star
         refuel = ctx.refuel
+
+        name = star.name
+        coords = "%.2f,%.2f,%.2f" % (star.x, star.y, star.z)
 
         types = []
         if star.distance_to_neutron is not None:
@@ -54,11 +64,7 @@ def reconstruct_path(came_from, ctx):
         if refuel:
             types.append("SC")
 
-        path.insert(0, "%s [%.2f,%.2f,%.2f;%s]" %
-                    (star.name, star.x, star.y, star.z, ",".join(types)))
-
-        id = ctx.id
-    return path
+        print("%s [%s;%s]" % (name, coords, ",".join(types)))
 
 
 def handle_neighbor(came_from, g, f, h, open_queue, current_ctx, neighbor, refuel):
@@ -108,27 +114,26 @@ def handle_neighbor(came_from, g, f, h, open_queue, current_ctx, neighbor, refue
         open_queue.add(neighbor_ctx, f_score)
 
 
+STARS = {
+    "colonia": Star(1, "Colonia", -9530, -910, 19808),
+    "hillary_depot": Star(2, "Blu Thua AI-A c14-10", -54, 149, 2099),
+    "omega_mining": Star(3, "Omega Sector VE-Q b5-15", -1444, -85, 5319),
+    "rohini": Star(4, "Rohini", -3374, -47, 6912),
+    "sacaqawea": Star(5, "Skaudai CH-B d14-34", -5481, -579, 10429),
+    "sagittarius": Star(6, "Sagittarius A*", 25, -20, 25899),
+    "sol": Star(7, "Sol", 0, 0, 0)
+}
+
+
 def run(db):
     time_start = time.time()
 
     galaxy = Galaxy(db)
-    base_jump_range = ship.get_max_jump_range()
 
-    star_colonia = Star(1, "Colonia", -9530, -910, 19808)
-    star_hillary_depot = Star(2, "Blu Thua AI-A c14-10", -54, 149, 2099)
-    star_omega_mining = Star(3, "Omega Sector VE-Q b5-15",
-                             -1444, -85, 5319)
-    star_rohini = Star(4, "Rohini", -3374, -47, 6912)
-    star_sacaqawea = Star(5, "Skaudai CH-B d14-34", -5481, -579, 10429)
-    star_sagittarius = Star(6, "Sagittarius A*", 25, -20, 25899)
-    star_sol = Star(7, "Sol", 0, 0, 0)
-
-    start = star_sol
-    goal = star_sagittarius
+    start = STARS["sol"]
+    goal = STARS["sagittarius"]
 
     lowest_dist_to_goal = start.dist(goal)
-
-    def h(ctx): return ctx.star.dist(goal)/(4*base_jump_range)
 
     # came_from[n] is the node immediately preceding it on the cheapest path currently known
     came_from = {}
@@ -138,6 +143,8 @@ def run(db):
     # g[n] is the cost of the cheapest path from start to n currently known
     g = defaultdict(lambda: 1000000)
     g[start_ctx.id] = 0
+
+    def h(ctx): return ctx.star.dist(goal)/(4*ship.get_max_jump_range())
 
     # f[n] is g[n]+h(n)
     f = defaultdict(lambda: 1000000)
@@ -163,10 +170,11 @@ def run(db):
         print("%8d %8d %.3f %5d %5d   %s" %
               (i, len(open_queue), f[ctx.id], lowest_dist_to_goal, dist, star.name))
 
+        # reached goal
         if star.id == goal.id:
+            path = reconstruct_path(came_from, ctx)
             print()
-            for line in reconstruct_path(came_from, ctx):
-                print(line)
+            print_path(path)
             break
 
         # direct route to goal
@@ -176,10 +184,12 @@ def run(db):
 
         neighbors = galaxy.get_neighbors(star, 500)
         for neighbor in neighbors:
+            # without refueling
             handle_neighbor(
                 came_from, g, f, h, open_queue, ctx, neighbor, False
             )
             if neighbor.distance_to_scoopable is not None:
+                # with refueling
                 handle_neighbor(
                     came_from, g, f, h, open_queue, ctx, neighbor, True
                 )
