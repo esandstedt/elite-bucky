@@ -62,30 +62,33 @@ def reconstruct_path(came_from, ctx):
 
 def handle_neighbor(came_from, g, f, h, open_queue, current_ctx, neighbor, refuel):
     star = current_ctx.star
-    fuel = current_ctx.fuel if not refuel else ship.fuel_capacity
+    fuel = current_ctx.fuel
 
     jump_range = ship.get_max_jump_range(fuel)
-    if jump_range == 0:
-        return
     if star.distance_to_neutron is not None:
         jump_range = 4*jump_range
+
+    if jump_range == 0:
+        return
 
     dist = star.dist(neighbor)
 
     remaining_jump_range = ship.get_max_jump_range()
-    remaining_dist = max(0, dist - (jump_range - 1))
+    remaining_dist = max(0, dist - jump_range)
     num_of_jumps = 1 + math.ceil(remaining_dist / remaining_jump_range)
 
     refuel_penalty = 0
     if refuel or num_of_jumps > 1:
-        refuel_penalty = 1.5
+        refuel_penalty = 0.5
 
     g_score = g[current_ctx.id] + num_of_jumps + refuel_penalty
 
-    neighbor_ctx = Context(neighbor, refuel, 0)
+    neighbor_ctx = Context(neighbor, refuel, fuel)
 
     if g_score < g[neighbor_ctx.id]:
-        if num_of_jumps > 1:
+        if refuel:
+            neighbor_ctx.fuel = ship.fuel_capacity
+        elif num_of_jumps > 1:
             neighbor_ctx.fuel = ship.fuel_capacity - ship.max_fuel_per_jump
         else:
             fuel_cost = 0
@@ -93,7 +96,7 @@ def handle_neighbor(came_from, g, f, h, open_queue, current_ctx, neighbor, refue
                 fuel_cost = ship.get_fuel_cost(fuel, dist / 4)
             else:
                 fuel_cost = ship.get_fuel_cost(fuel, dist)
-            neighbor_ctx.fuel = fuel - fuel_cost
+            neighbor_ctx.fuel -= fuel_cost
 
         came_from[neighbor_ctx.id] = current_ctx
         g[neighbor_ctx.id] = g_score
