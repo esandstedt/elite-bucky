@@ -146,7 +146,11 @@ def run(db):
     open_queue = OpenQueue()
     open_queue.add(start_ctx, f[start_ctx.id])
 
+    i = 0
+
     while open_queue.any():
+        i += 1
+
         [f_score, ctx] = open_queue.pop()
         star = ctx.star
 
@@ -156,8 +160,8 @@ def run(db):
 
         dist = star.dist(goal)
         lowest_dist_to_goal = min(lowest_dist_to_goal, dist)
-        print("%7d %6.3f %5d %5d   %s" %
-              (len(open_queue), f[ctx.id], lowest_dist_to_goal, dist, star.name))
+        print("%8d %8d %.3f %5d %5d   %s" %
+              (i, len(open_queue), f[ctx.id], lowest_dist_to_goal, dist, star.name))
 
         if star.id == goal.id:
             print()
