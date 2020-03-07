@@ -8,7 +8,8 @@ from model.galaxy import Galaxy
 from model.ship import Ship
 
 
-ship = Ship("DSV Phoenix", 578, 4, 64, "6A", 8, 2902, 10.5)
+#ship = Ship("DSV Phoenix (Exploration)", 578, 4, 64, "6A", 8, 2902, 10.5)
+ship = Ship("DSV Phoenix (Bucky)", 479, 0, 64, "6A", 8, 2902, 10.5)
 
 
 class OpenQueue:
@@ -81,22 +82,23 @@ def handle_neighbor(came_from, g, f, h, open_queue, current_ctx, neighbor, refue
     if refuel or num_of_jumps > 1:
         refuel_penalty = 0.5
 
-    g_score = g[current_ctx.id] + num_of_jumps + refuel_penalty
-
     neighbor_ctx = Context(neighbor, refuel, fuel)
 
-    if g_score < g[neighbor_ctx.id]:
-        if refuel:
-            neighbor_ctx.fuel = ship.fuel_capacity
-        elif num_of_jumps > 1:
-            neighbor_ctx.fuel = ship.fuel_capacity - ship.max_fuel_per_jump
+    if refuel:
+        neighbor_ctx.fuel = ship.fuel_capacity
+    elif num_of_jumps > 1:
+        neighbor_ctx.fuel = ship.fuel_capacity - ship.max_fuel_per_jump
+    else:
+        fuel_cost = 0
+        if star.distance_to_neutron is not None:
+            fuel_cost = ship.get_fuel_cost(fuel, dist / 4)
         else:
-            fuel_cost = 0
-            if star.distance_to_neutron is not None:
-                fuel_cost = ship.get_fuel_cost(fuel, dist / 4)
-            else:
-                fuel_cost = ship.get_fuel_cost(fuel, dist)
-            neighbor_ctx.fuel -= fuel_cost
+            fuel_cost = ship.get_fuel_cost(fuel, dist)
+        neighbor_ctx.fuel -= fuel_cost
+
+    g_score = g[current_ctx.id] + num_of_jumps + refuel_penalty
+
+    if g_score < g[neighbor_ctx.id]:
 
         came_from[neighbor_ctx.id] = current_ctx
         g[neighbor_ctx.id] = g_score
@@ -121,9 +123,8 @@ def run(db):
     star_sagittarius = Star(6, "Sagittarius A*", 25, -20, 25899)
     star_sol = Star(7, "Sol", 0, 0, 0)
 
-    #start = Star(8, "Froarks GM-D d12-355", -533, 209, 15375)
     start = star_sol
-    goal = star_rohini
+    goal = star_sagittarius
 
     lowest_dist_to_goal = start.dist(goal)
 
