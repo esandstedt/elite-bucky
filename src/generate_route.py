@@ -1,3 +1,4 @@
+import datetime
 import heapq
 import math
 import mysql.connector
@@ -130,8 +131,8 @@ def run(db):
 
     galaxy = Galaxy(db)
 
-    start = STARS["sol"]
-    goal = STARS["sagittarius"]
+    start = STARS["omega_mining"]
+    goal = STARS["rohini"]
 
     lowest_dist_to_goal = start.dist(goal)
 
@@ -195,9 +196,10 @@ def run(db):
                 )
 
     time_end = time.time()
+    time_delta = datetime.timedelta(seconds=time_end-time_start)
 
     print()
-    print("time: " + str(time_end - time_start))
+    print("time: " + str(time_delta))
 
 
 if __name__ == "__main__":
