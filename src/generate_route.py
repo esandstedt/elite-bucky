@@ -1,60 +1,16 @@
 import datetime
-import heapq
-import math
 import mysql.connector
 import time
-from collections import defaultdict
 from model.star import Star
 from model.galaxy import Galaxy
+from model.pathfind import Pathfind
 from model.ship import Ship
 
 
-#ship = Ship("DSV Phoenix (Exploration)", 578, 4, 64, "6A", 8, 2902, 10.5)
-ship = Ship("DSV Phoenix (Bucky)", 479, 0, 64, "6A", 8, 2902, 10.5)
-
-
-class OpenQueue:
-    def __init__(self):
-        self._heap = []
-
-    def add(self, ctx, weight):
-        heapq.heappush(self._heap, [weight, ctx])
-
-    def any(self):
-        return len(self._heap) != 0
-
-    def pop(self):
-        return heapq.heappop(self._heap)
-
-    def __len__(self):
-        return len(self._heap)
-
-
-class Context:
-    def __init__(self, star, refuel, fuel):
-        self.id = (star.id, refuel)
-        self.star = star
-        self.refuel = refuel
-        self.fuel = fuel
-
-    def __lt__(self, other):
-        return self.id < other.id
-
-
-def reconstruct_path(came_from, ctx):
-    path = [ctx]
-    id = ctx.id
-    while id in came_from:
-        ctx = came_from[id]
-        path.append(ctx)
-        id = ctx.id
-    return reversed(path)
-
-
 def print_path(path):
-    for ctx in path:
-        star = ctx.star
-        refuel = ctx.refuel
+    for node in path:
+        star = node.star
+        refuel = node.refuel
 
         name = star.name
         coords = "%.2f,%.2f,%.2f" % (star.x, star.y, star.z)
@@ -66,53 +22,6 @@ def print_path(path):
             types.append("SC")
 
         print("%s [%s;%s]" % (name, coords, ",".join(types)))
-
-
-def handle_neighbor(came_from, g, f, h, open_queue, current_ctx, neighbor, refuel):
-    star = current_ctx.star
-    fuel = current_ctx.fuel
-
-    jump_range = ship.get_max_jump_range(fuel)
-    if star.distance_to_neutron is not None:
-        jump_range = 4*jump_range
-
-    if jump_range == 0:
-        return
-
-    dist = star.dist(neighbor)
-
-    remaining_jump_range = ship.get_max_jump_range()
-    remaining_dist = max(0, dist - jump_range)
-    num_of_jumps = 1 + math.ceil(remaining_dist / remaining_jump_range)
-
-    refuel_penalty = 0
-    if refuel or num_of_jumps > 1:
-        refuel_penalty = 0.5
-
-    neighbor_ctx = Context(neighbor, refuel, fuel)
-
-    if refuel:
-        neighbor_ctx.fuel = ship.fuel_capacity
-    elif num_of_jumps > 1:
-        neighbor_ctx.fuel = ship.fuel_capacity - ship.max_fuel_per_jump
-    else:
-        fuel_cost = 0
-        if star.distance_to_neutron is not None:
-            fuel_cost = ship.get_fuel_cost(fuel, dist / 4)
-        else:
-            fuel_cost = ship.get_fuel_cost(fuel, dist)
-        neighbor_ctx.fuel -= fuel_cost
-
-    g_score = g[current_ctx.id] + num_of_jumps + refuel_penalty
-
-    if g_score < g[neighbor_ctx.id]:
-
-        came_from[neighbor_ctx.id] = current_ctx
-        g[neighbor_ctx.id] = g_score
-        f_score = g_score + h(neighbor_ctx)
-        f[neighbor_ctx.id] = f_score
-
-        open_queue.add(neighbor_ctx, f_score)
 
 
 STARS = {
@@ -127,79 +36,25 @@ STARS = {
 
 
 def run(db):
-    time_start = time.time()
+    #ship = Ship("DSV Phoenix (Exploration)", 578, 4, 64, "6A", 8, 2902, 10.5)
+    ship = Ship("DSV Phoenix (Bucky)", 479, 0, 64, "6A", 8, 2902, 10.5)
 
     galaxy = Galaxy(db)
 
-    start = STARS["omega_mining"]
-    goal = STARS["rohini"]
+    start = STARS["sol"]
+    goal = STARS["hillary_depot"]
 
-    lowest_dist_to_goal = start.dist(goal)
-
-    # came_from[n] is the node immediately preceding it on the cheapest path currently known
-    came_from = {}
-
-    start_ctx = Context(start, False, ship.fuel_capacity)
-
-    # g[n] is the cost of the cheapest path from start to n currently known
-    g = defaultdict(lambda: 1000000)
-    g[start_ctx.id] = 0
-
-    def h(ctx): return ctx.star.dist(goal)/(4*ship.get_max_jump_range())
-
-    # f[n] is g[n]+h(n)
-    f = defaultdict(lambda: 1000000)
-    f[start_ctx.id] = h(start_ctx)
-
-    open_queue = OpenQueue()
-    open_queue.add(start_ctx, f[start_ctx.id])
-
-    i = 0
-
-    while open_queue.any():
-        i += 1
-
-        [f_score, ctx] = open_queue.pop()
-        star = ctx.star
-
-        # a better route has been found already
-        if f[ctx.id] < f_score:
-            continue
-
-        dist = star.dist(goal)
-        lowest_dist_to_goal = min(lowest_dist_to_goal, dist)
-        print("%8d %8d %.3f %5d %5d   %s" %
-              (i, len(open_queue), f[ctx.id], lowest_dist_to_goal, dist, star.name))
-
-        # reached goal
-        if star.id == goal.id:
-            path = reconstruct_path(came_from, ctx)
-            print()
-            print_path(path)
-            break
-
-        # direct route to goal
-        handle_neighbor(
-            came_from, g, f, h, open_queue, ctx, goal, False
-        )
-
-        neighbors = galaxy.get_neighbors(star, 500)
-        for neighbor in neighbors:
-            # without refueling
-            handle_neighbor(
-                came_from, g, f, h, open_queue, ctx, neighbor, False
-            )
-            if neighbor.distance_to_scoopable is not None:
-                # with refueling
-                handle_neighbor(
-                    came_from, g, f, h, open_queue, ctx, neighbor, True
-                )
-
-    time_end = time.time()
-    time_delta = datetime.timedelta(seconds=time_end-time_start)
+    t_start = time.time()
+    path = Pathfind(ship, galaxy, start, goal).run()
+    t_end = time.time()
 
     print()
-    print("time: " + str(time_delta))
+    print_path(path)
+
+    t_delta = datetime.timedelta(seconds=t_end-t_start)
+
+    print()
+    print("time: " + str(t_delta))
 
 
 if __name__ == "__main__":
