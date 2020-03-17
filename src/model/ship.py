@@ -37,7 +37,7 @@ class Ship:
             fuel = self.fuel_capacity
 
         # this algorithm can't handle restrictions when at low fuel so use the nuclear option
-        if fuel < self.max_fuel_per_jump:
+        if fuel < self.max_fuel_per_jump + 2:
             return 0
 
         m = self.optimised_mass / (self.dry_mass + self.cargo_mass + fuel)
