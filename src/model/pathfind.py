@@ -32,6 +32,9 @@ class Node:
         return self.id < other.id
 
 
+TIME_PER_JUMP = 60
+
+
 class Pathfind:
     def __init__(self, ship, galaxy, start, goal):
         self.ship = ship
@@ -45,7 +48,7 @@ class Pathfind:
         self.open = Open()
 
     def h(self, node):
-        return node.star.dist(self.goal)/(4*self.ship.get_max_jump_range())
+        return TIME_PER_JUMP * node.star.dist(self.goal)/(4*self.ship.get_max_jump_range())
 
     def handle_neighbor(self, current_node, neighbor, refuel):
         star = current_node.star
@@ -64,25 +67,40 @@ class Pathfind:
         remaining_dist = max(0, dist - jump_range)
         num_of_jumps = 1 + math.ceil(remaining_dist / remaining_jump_range)
 
-        refuel_penalty = 0
-        if refuel or num_of_jumps > 1:
-            refuel_penalty = 0.5
+        fuel_cost = 0
+        if star.distance_to_neutron is not None:
+            fuel_cost = self.ship.get_fuel_cost(
+                fuel, min(jump_range, dist / 4))
+        else:
+            fuel_cost = self.ship.get_fuel_cost(fuel, min(jump_range, dist))
 
-        neighbor_node = Node(neighbor, refuel, fuel)
+        neighbor_fuel = fuel - fuel_cost
+        refuel_penalty = 0
+        if num_of_jumps > 1:
+            # fill back to full tank
+            delta = self.ship.fuel_capacity - (neighbor_fuel)
+            t_fst = delta / self.ship.fuel_scoop_rate
+            # refill after each jump
+            t_rst = (num_of_jumps - 1) * \
+                self.ship.max_fuel_per_jump / self.ship.fuel_scoop_rate
+
+            neighbor_fuel = fuel - self.ship.max_fuel_per_jump
+            refuel_penalty = t_fst + t_rst
 
         if refuel:
-            neighbor_node.fuel = self.ship.fuel_capacity
-        elif num_of_jumps > 1:
-            neighbor_node.fuel = self.ship.fuel_capacity - self.ship.max_fuel_per_jump
-        else:
-            fuel_cost = 0
-            if star.distance_to_neutron is not None:
-                fuel_cost = self.ship.get_fuel_cost(fuel, dist / 4)
-            else:
-                fuel_cost = self.ship.get_fuel_cost(fuel, dist)
-            neighbor_node.fuel -= fuel_cost
+            # time to travel to scoopable star
+            t_travel = 60 * neighbor.distance_to_scoopable / 500
+            # time to refuel
+            delta = self.ship.fuel_capacity - (neighbor_fuel)
+            t_refuel = delta / self.ship.fuel_scoop_rate
 
-        g_score = self.g[current_node.id] + num_of_jumps + refuel_penalty
+            neighbor_fuel = self.ship.fuel_capacity
+            refuel_penalty = t_travel + t_refuel
+
+        neighbor_node = Node(neighbor, refuel, neighbor_fuel)
+
+        g_score = self.g[current_node.id] + \
+            TIME_PER_JUMP * num_of_jumps + refuel_penalty
 
         if g_score < self.g[neighbor_node.id]:
 
@@ -122,7 +140,7 @@ class Pathfind:
 
             dist = star.dist(self.goal)
             lowest_dist_to_goal = min(lowest_dist_to_goal, dist)
-            print("%8d %8d %.3f %5d %5d   %s" %
+            print("%8d %8d %5d %5d %5d   %s" %
                   (i, len(self.open), self.f[node.id], lowest_dist_to_goal, dist, star.name))
 
             # reached goal

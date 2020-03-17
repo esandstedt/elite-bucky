@@ -36,13 +36,13 @@ STARS = {
 
 
 def run(db):
-    #ship = Ship("DSV Phoenix (Exploration)", 578, 4, 64, "6A", 8, 2902, 10.5)
-    ship = Ship("DSV Phoenix (Bucky)", 479, 0, 64, "6A", 8, 2902, 10.5)
+    #ship = Ship("DSV Phoenix (Exploration)", 578, 4, 64, "6A", 8, 2902, 10.5, 1.245)
+    ship = Ship("DSV Phoenix (Bucky)", 479, 0, 64, "6A", 8, 2902, 10.5, 1.245)
 
     galaxy = Galaxy(db)
 
     start = STARS["sol"]
-    goal = STARS["hillary_depot"]
+    goal = STARS["rohini"]
 
     t_start = time.time()
     path = Pathfind(ship, galaxy, start, goal).run()
