@@ -1,3 +1,4 @@
+import datetime
 import heapq
 import math
 import time
@@ -140,8 +141,8 @@ class Pathfind:
 
             dist = star.dist(self.goal)
             lowest_dist_to_goal = min(lowest_dist_to_goal, dist)
-            print("%8d %8d %5d %5d %5d   %s" %
-                  (i, len(self.open), self.f[node.id], lowest_dist_to_goal, dist, star.name))
+            print("%8d %8d %9s %5d %5d   %s" %
+                  (i, len(self.open), datetime.timedelta(seconds=int(self.f[node.id])), lowest_dist_to_goal, dist, star.name))
 
             # reached goal
             if star.id == self.goal.id:
@@ -150,7 +151,7 @@ class Pathfind:
             # direct route to goal
             self.handle_neighbor(node, self.goal, False)
 
-            neighbors = self.galaxy.get_neighbors(star, 500)
+            neighbors = self.galaxy.get_neighbors(star, 750)
             for neighbor in neighbors:
                 # without refueling
                 self.handle_neighbor(node, neighbor, False)

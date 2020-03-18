@@ -17,9 +17,9 @@ class Galaxy:
         def c(v): return math.floor(v/1000)
 
         points = list(itertools.product(
-            set(map(c, [star.x+dist, star.x-dist])),
-            set(map(c, [star.y+dist, star.y-dist])),
-            set(map(c, [star.z+dist, star.z-dist])),
+            range(c(star.x-dist), c(star.x+dist)+1),
+            range(c(star.y-dist), c(star.y+dist)+1),
+            range(c(star.z-dist), c(star.z+dist)+1)
         ))
 
         sectors = []
