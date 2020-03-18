@@ -151,7 +151,7 @@ class Pathfind:
             # direct route to goal
             self.handle_neighbor(node, self.goal, False)
 
-            neighbors = self.galaxy.get_neighbors(star, 750)
+            neighbors = self.galaxy.get_neighbors(star, 500)
             for neighbor in neighbors:
                 # without refueling
                 self.handle_neighbor(node, neighbor, False)
