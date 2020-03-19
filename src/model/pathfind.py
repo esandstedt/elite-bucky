@@ -49,7 +49,10 @@ class Pathfind:
         self.open = Open()
 
     def h(self, node):
-        return TIME_PER_JUMP * node.star.dist(self.goal)/(4*self.ship.get_max_jump_range())
+        # neutron boosted with no fuel remaining
+        max_jump_range = 4 * \
+            self.ship.get_max_jump_range(self.ship.max_fuel_per_jump)
+        return TIME_PER_JUMP * node.star.dist(self.goal) / max_jump_range
 
     def handle_neighbor(self, current_node, neighbor, refuel):
         star = current_node.star
@@ -76,6 +79,11 @@ class Pathfind:
             fuel_cost = self.ship.get_fuel_cost(fuel, min(jump_range, dist))
 
         neighbor_fuel = fuel - fuel_cost
+
+        # not a valid neighbor because too low fuel
+        if neighbor_fuel < 2:
+            return
+
         refuel_penalty = 0
         if num_of_jumps > 1:
             # fill back to full tank
@@ -141,7 +149,7 @@ class Pathfind:
 
             dist = star.dist(self.goal)
             lowest_dist_to_goal = min(lowest_dist_to_goal, dist)
-            print("%8d %8d %9s %5d %5d   %s" %
+            print("%8d %8d %9s %6d %6d   %s" %
                   (i, len(self.open), datetime.timedelta(seconds=int(self.f[node.id])), lowest_dist_to_goal, dist, star.name))
 
             # reached goal
