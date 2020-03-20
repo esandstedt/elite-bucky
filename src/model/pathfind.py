@@ -81,7 +81,7 @@ class Pathfind:
         neighbor_fuel = fuel - fuel_cost
 
         # not a valid neighbor because too low fuel
-        if neighbor_fuel < 2:
+        if neighbor_fuel < 1:
             return
 
         refuel_penalty = 0
