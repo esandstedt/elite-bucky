@@ -63,7 +63,7 @@ class Pathfind:
         if star.distance_to_neutron is not None:
             jump_range = 4*jump_range
             # time to travel to neutron star
-            neutron_penalty = 60 * neighbor.distance_to_neutron / 500
+            neutron_penalty = 60 * star.distance_to_neutron / 500
 
         if jump_range == 0:
             return
@@ -164,6 +164,13 @@ class Pathfind:
 
             neighbors = self.galaxy.get_neighbors(star, 500)
             for neighbor in neighbors:
+
+                # special rules for sol-sagittarius
+                # if neighbor.x < -2000 or 2000 < neighbor.x:
+                #    continue
+                # if neighbor.y < -2000 or 2000 < neighbor.y:
+                #    continue
+
                 # without refueling
                 self.handle_neighbor(node, neighbor, False)
                 if neighbor.distance_to_scoopable is not None:
