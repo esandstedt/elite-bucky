@@ -59,8 +59,11 @@ class Pathfind:
         fuel = current_node.fuel
 
         jump_range = self.ship.get_max_jump_range(fuel)
+        neutron_penalty = 0
         if star.distance_to_neutron is not None:
             jump_range = 4*jump_range
+            # time to travel to neutron star
+            neutron_penalty = 60 * neighbor.distance_to_neutron / 500
 
         if jump_range == 0:
             return
@@ -109,7 +112,7 @@ class Pathfind:
         neighbor_node = Node(neighbor, refuel, neighbor_fuel)
 
         g_score = self.g[current_node.id] + \
-            TIME_PER_JUMP * num_of_jumps + refuel_penalty
+            TIME_PER_JUMP * num_of_jumps + refuel_penalty + neutron_penalty
 
         if g_score < self.g[neighbor_node.id]:
 
