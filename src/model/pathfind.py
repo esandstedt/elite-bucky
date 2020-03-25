@@ -33,7 +33,7 @@ class Node:
         return self.id < other.id
 
 
-TIME_PER_JUMP = 60
+TIME_PER_JUMP = 55
 
 
 class Pathfind:
@@ -165,14 +165,38 @@ class Pathfind:
             neighbors = self.galaxy.get_neighbors(star, 500)
             for neighbor in neighbors:
 
-                # special rules for sol-sagittarius
-                # if neighbor.x < -2000 or 2000 < neighbor.x:
-                #    continue
-                # if neighbor.y < -2000 or 2000 < neighbor.y:
-                #    continue
+                # cylinder constraint
+                if 2000 < self.distance_from_center_line(neighbor):
+                    continue
 
                 # without refueling
                 self.handle_neighbor(node, neighbor, False)
                 if neighbor.distance_to_scoopable is not None:
                     # with refueling
                     self.handle_neighbor(node, neighbor, True)
+
+    def distance_from_center_line(self, star):
+
+        # https://mathworld.wolfram.com/Point-LineDistance3-Dimensional.html
+
+        x0 = [star.x, star.y, star.z]
+        x1 = [self.start.x, self.start.y, self.start.z]
+        x2 = [self.goal.x, self.goal.y, self.goal.z]
+
+        x1m0 = [x1[i]-x0[i] for i in range(3)]
+        x2m1 = [x2[i]-x1[i] for i in range(3)]
+
+        t = -1 * sum([x1m0[i]*x2m1[i] for i in range(3)]) / \
+            sum([x2m1[i]**2 for i in range(3)])
+
+        x3 = [x1[i] + t * x2m1[i] for i in range(3)]
+
+        if t < 0:
+            # distance from start
+            return math.sqrt(sum([(x0[i]-x1[i])**2 for i in range(3)]))
+        elif 1 < t:
+            # distance from goal
+            return math.sqrt(sum([(x0[i]-x2[i])**2 for i in range(3)]))
+        else:
+            # distance from line point
+            return math.sqrt(sum([(x0[i]-x3[i])**2 for i in range(3)]))

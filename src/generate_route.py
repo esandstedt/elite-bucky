@@ -31,7 +31,8 @@ STARS = {
     "rohini": Star(4, "Rohini", -3374, -47, 6912),
     "sacaqawea": Star(5, "Skaudai CH-B d14-34", -5481, -579, 10429),
     "sagittarius": Star(6, "Sagittarius A*", 25, -20, 25899),
-    "sol": Star(7, "Sol", 0, 0, 0)
+    "sol": Star(7, "Sol", 0, 0, 0),
+    "eagle": Star(8, "Eagle Sector IR-W d1-105", -2046, 104, 6699),
 }
 
 
@@ -42,7 +43,7 @@ def run(db):
     galaxy = Galaxy(db)
 
     start = STARS["sol"]
-    goal = STARS["rohini"]
+    goal = STARS["sagittarius"]
 
     t_start = time.time()
     path = Pathfind(ship, galaxy, start, goal).run()
