@@ -24,6 +24,25 @@ def print_path(path):
         print("%s [%s;%s]" % (name, coords, ",".join(types)))
 
 
+def print_path_yaml(path):
+    print("route:")
+    for node in path:
+        star = node.star
+        neutron = star.distance_to_neutron
+        scoopable = star.distance_to_scoopable
+        refuel = node.refuel
+
+        print(" - name: %s" % (star.name,))
+
+        if neutron is not None and 0 < neutron:
+            print("   neutron: true")
+
+        if refuel:
+            print("   scoopable: true")
+        elif not refuel and scoopable == 0:
+            print("   scoopable: false")
+
+
 STARS = {
     "colonia": Star(1, "Colonia", -9530, -910, 19808),
     "hillary_depot": Star(2, "Blu Thua AI-A c14-10", -54, 149, 2099),
@@ -50,7 +69,7 @@ def run(db):
     t_end = time.time()
 
     print()
-    print_path(path)
+    print_path_yaml(path)
 
     t_delta = datetime.timedelta(seconds=t_end-t_start)
 
