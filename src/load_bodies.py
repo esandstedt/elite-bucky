@@ -68,6 +68,8 @@ def run(cursor, bodies):
                 db.commit()
                 print("%9d %9d %s" % (c, d, name))
 
+    db.commit()
+
 
 if __name__ == "__main__":
     db = mysql.connector.connect(

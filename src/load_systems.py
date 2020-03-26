@@ -21,7 +21,7 @@ def enumerate_systems(file_path):
 
 
 def run(cursor, systems):
-    existing_ids = get_existing_system_ids(cursor)
+    # existing_ids = get_existing_system_ids(cursor)
 
     c = 0
     d = 0
@@ -34,8 +34,8 @@ def run(cursor, systems):
         y = system["coords"]["y"]
         z = system["coords"]["z"]
 
-        if id in existing_ids:
-            continue
+        # if id in existing_ids:
+        #     continue
 
         d += 1
 
@@ -47,6 +47,7 @@ def run(cursor, systems):
         if d % 1000 == 0:
             print("%9d %9d %s" % (c, d, name))
             db.commit()
+
     db.commit()
 
 
