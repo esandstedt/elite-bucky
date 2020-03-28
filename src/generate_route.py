@@ -32,16 +32,16 @@ def print_path_yaml(path):
         scoopable = star.distance_to_scoopable
         refuel = node.refuel
 
-        print(" - name: %s" % (star.name,))
+        print("  - name: %s" % (star.name,))
 
         if neutron is not None and 0 < neutron:
-            print("   neutron: true")
+            print("    neutron: true")
 
         if refuel is not None:
-            print("   scoopable: true")
-            print("   fuel: %d" % (refuel,))
+            print("    scoopable: true")
+            print("    fuel: %d" % (refuel,))
         elif scoopable == 0:
-            print("   scoopable: false")
+            print("    scoopable: false")
 
 
 STARS = {
