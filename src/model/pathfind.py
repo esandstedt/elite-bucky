@@ -23,8 +23,8 @@ class Open:
 
 
 class Node:
-    def __init__(self, star, refuel, fuel):
-        self.id = (star.id, refuel)
+    def __init__(self, ship, star, refuel, fuel):
+        self.id = "%s %d" % (star.id, fuel/ship.max_fuel_per_jump)
         self.star = star
         self.refuel = refuel
         self.fuel = fuel
@@ -37,11 +37,12 @@ TIME_PER_JUMP = 55
 
 
 class Pathfind:
-    def __init__(self, ship, galaxy, start, goal):
+    def __init__(self, ship, galaxy, start, goal, refuel_levels):
         self.ship = ship
         self.galaxy = galaxy
         self.start = start
         self.goal = goal
+        self.refuel_levels = refuel_levels
 
         self.came_from = {}
         self.g = defaultdict(lambda: 1000000)
@@ -99,17 +100,22 @@ class Pathfind:
             neighbor_fuel = fuel - self.ship.max_fuel_per_jump
             refuel_penalty = t_fst + t_rst
 
-        if refuel:
+        if refuel is not None:
+
+            # can't refuel below the current level
+            if refuel < neighbor_fuel:
+                return
+
             # time to travel to scoopable star
             t_travel = 60 * neighbor.distance_to_scoopable / 500
             # time to refuel
-            delta = self.ship.fuel_capacity - (neighbor_fuel)
+            delta = refuel - neighbor_fuel
             t_refuel = delta / self.ship.fuel_scoop_rate
 
-            neighbor_fuel = self.ship.fuel_capacity
+            neighbor_fuel = refuel
             refuel_penalty = t_travel + t_refuel
 
-        neighbor_node = Node(neighbor, refuel, neighbor_fuel)
+        neighbor_node = Node(self.ship, neighbor, refuel, neighbor_fuel)
 
         g_score = self.g[current_node.id] + \
             TIME_PER_JUMP * num_of_jumps + refuel_penalty + neutron_penalty
@@ -133,7 +139,12 @@ class Pathfind:
         return reversed(path)
 
     def run(self):
-        start_node = Node(self.start, False, self.ship.fuel_capacity)
+        start_node = Node(
+            self.ship,
+            self.start,
+            self.ship.fuel_capacity,
+            self.ship.fuel_capacity
+        )
         self.g[start_node.id] = 0
         self.f[start_node.id] = self.h(start_node)
         self.open.add(start_node, self.f[start_node.id])
@@ -160,7 +171,7 @@ class Pathfind:
                 return self.reconstruct_path(node)
 
             # direct route to goal
-            self.handle_neighbor(node, self.goal, False)
+            self.handle_neighbor(node, self.goal, None)
 
             neighbors = self.galaxy.get_neighbors(star, 500)
             for neighbor in neighbors:
@@ -170,10 +181,11 @@ class Pathfind:
                     continue
 
                 # without refueling
-                self.handle_neighbor(node, neighbor, False)
+                self.handle_neighbor(node, neighbor, None)
                 if neighbor.distance_to_scoopable is not None:
                     # with refueling
-                    self.handle_neighbor(node, neighbor, True)
+                    for level in self.refuel_levels:
+                        self.handle_neighbor(node, neighbor, level)
 
     def distance_from_center_line(self, star):
 

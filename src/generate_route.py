@@ -37,9 +37,10 @@ def print_path_yaml(path):
         if neutron is not None and 0 < neutron:
             print("   neutron: true")
 
-        if refuel:
+        if refuel is not None:
             print("   scoopable: true")
-        elif not refuel and scoopable == 0:
+            print("   fuel: %d" % (refuel,))
+        elif scoopable == 0:
             print("   scoopable: false")
 
 
@@ -52,6 +53,7 @@ STARS = {
     "sagittarius": Star(6, "Sagittarius A*", 25, -20, 25899),
     "sol": Star(7, "Sol", 0, 0, 0),
     "eagle": Star(8, "Eagle Sector IR-W d1-105", -2046, 104, 6699),
+    "bucky_end": Star(10, "Myriesly RT-Z d13-3970", -397, 66, 25778)
 }
 
 
@@ -61,11 +63,12 @@ def run(db):
 
     galaxy = Galaxy(db)
 
-    start = STARS["omega_mining"]
-    goal = STARS["sol"]
+    start = STARS["sol"]
+    goal = STARS["rohini"]
+    refuel_levels = [32, 48, 64]
 
     t_start = time.time()
-    path = Pathfind(ship, galaxy, start, goal).run()
+    path = Pathfind(ship, galaxy, start, goal, refuel_levels).run()
     t_end = time.time()
 
     print()
