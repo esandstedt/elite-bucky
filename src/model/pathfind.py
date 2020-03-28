@@ -64,7 +64,8 @@ class Pathfind:
         if star.distance_to_neutron is not None:
             jump_range = 4*jump_range
             # time to travel to neutron star
-            neutron_penalty = 60 * star.distance_to_neutron / 500
+            neutron_penalty = self.get_travel_time(
+                star.distance_to_neutron)
 
         if jump_range == 0:
             return
@@ -107,7 +108,7 @@ class Pathfind:
                 return
 
             # time to travel to scoopable star
-            t_travel = 60 * neighbor.distance_to_scoopable / 500
+            t_travel = self.get_travel_time(neighbor.distance_to_scoopable)
             # time to refuel
             delta = refuel - neighbor_fuel
             t_refuel = delta / self.ship.fuel_scoop_rate
@@ -128,6 +129,11 @@ class Pathfind:
             self.f[neighbor_node.id] = f_score
 
             self.open.add(neighbor_node, f_score)
+
+    def get_travel_time(self, distance):
+        if distance < 1:
+            return 0
+        return 12 * math.log(distance)
 
     def reconstruct_path(self, node):
         path = [node]
