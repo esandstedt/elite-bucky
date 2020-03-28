@@ -145,15 +145,16 @@ class Pathfind:
         return reversed(path)
 
     def run(self):
-        start_node = Node(
-            self.ship,
-            self.start,
-            self.ship.fuel_capacity,
-            self.ship.fuel_capacity
-        )
-        self.g[start_node.id] = 0
-        self.f[start_node.id] = self.h(start_node)
-        self.open.add(start_node, self.f[start_node.id])
+        for level in self.refuel_levels:
+            node = Node(
+                self.ship,
+                self.start,
+                level,
+                level
+            )
+            self.g[node.id] = 0
+            self.f[node.id] = self.h(node)
+            self.open.add(node, self.f[node.id])
 
         lowest_dist_to_goal = self.start.dist(self.goal)
 
