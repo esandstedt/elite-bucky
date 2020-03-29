@@ -24,13 +24,20 @@ class Open:
 
 class Node:
     def __init__(self, ship, star, refuel, fuel):
-        self.id = "%s %d" % (star.id, fuel/ship.max_fuel_per_jump)
+        fuel_avg = (fuel.min + fuel.max)/2
+        self.id = "%s %d" % (star.id, fuel_avg/ship.max_fuel_per_jump)
         self.star = star
         self.refuel = refuel
         self.fuel = fuel
 
     def __lt__(self, other):
         return self.id < other.id
+
+
+class FuelRange:
+    def __init__(self, min, max):
+        self.min = min
+        self.max = max
 
 
 TIME_PER_JUMP = 55
@@ -55,9 +62,55 @@ class Pathfind:
             self.ship.get_max_jump_range(self.ship.max_fuel_per_jump)
         return TIME_PER_JUMP * node.star.dist(self.goal) / max_jump_range
 
-    def handle_neighbor(self, current_node, neighbor, refuel):
-        star = current_node.star
-        fuel = current_node.fuel
+    def handle_neighbor(self, current, neighbor, refuel):
+        result_min = self.handle_neighbor_with_exact_fuel(
+            current,
+            neighbor,
+            current.fuel.min,
+            refuel.min if refuel is not None else None
+        )
+
+        if result_min is None:
+            return
+
+        result_max = self.handle_neighbor_with_exact_fuel(
+            current,
+            neighbor,
+            current.fuel.max,
+            refuel.max if refuel is not None else None
+        )
+
+        if result_max is None:
+            return
+
+        (neighbor_fuel_min, num_of_jumps_min, g_score_min) = result_min
+        (neighbor_fuel_max, num_of_jumps_max, g_score_max) = result_max
+
+        if num_of_jumps_min != num_of_jumps_max:
+            return
+
+        neighbor_node = Node(
+            self.ship,
+            neighbor,
+            refuel,
+            FuelRange(
+                neighbor_fuel_min,
+                neighbor_fuel_max
+            )
+        )
+
+        g_score = max(g_score_min, g_score_max)
+        if g_score < self.g[neighbor_node.id]:
+
+            self.came_from[neighbor_node.id] = current
+            self.g[neighbor_node.id] = g_score
+            f_score = g_score + self.h(neighbor_node)
+            self.f[neighbor_node.id] = f_score
+
+            self.open.add(neighbor_node, f_score)
+
+    def handle_neighbor_with_exact_fuel(self, current, neighbor, fuel, refuel):
+        star = current.star
 
         jump_range = self.ship.get_max_jump_range(fuel)
         neutron_penalty = 0
@@ -87,7 +140,7 @@ class Pathfind:
 
         # not a valid neighbor because too low fuel
         if neighbor_fuel < 1:
-            return
+            return None
 
         refuel_penalty = 0
         if num_of_jumps > 1:
@@ -105,7 +158,7 @@ class Pathfind:
 
             # can't refuel below the current level
             if refuel < neighbor_fuel:
-                return
+                return None
 
             # time to travel to scoopable star
             t_travel = self.get_travel_time(neighbor.distance_to_scoopable)
@@ -116,19 +169,10 @@ class Pathfind:
             neighbor_fuel = refuel
             refuel_penalty = t_travel + t_refuel
 
-        neighbor_node = Node(self.ship, neighbor, refuel, neighbor_fuel)
-
-        g_score = self.g[current_node.id] + \
+        g_score = self.g[current.id] + \
             TIME_PER_JUMP * num_of_jumps + refuel_penalty + neutron_penalty
 
-        if g_score < self.g[neighbor_node.id]:
-
-            self.came_from[neighbor_node.id] = current_node
-            self.g[neighbor_node.id] = g_score
-            f_score = g_score + self.h(neighbor_node)
-            self.f[neighbor_node.id] = f_score
-
-            self.open.add(neighbor_node, f_score)
+        return (neighbor_fuel, num_of_jumps, g_score)
 
     def get_travel_time(self, distance):
         if distance < 1:

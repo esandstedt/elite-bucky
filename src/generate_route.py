@@ -3,7 +3,7 @@ import mysql.connector
 import time
 from model.star import Star
 from model.galaxy import Galaxy
-from model.pathfind import Pathfind
+from model.pathfind import Pathfind, FuelRange
 from model.ship import Ship
 
 
@@ -38,8 +38,9 @@ def print_path_yaml(path):
             print("    neutron: true")
 
         if refuel is not None:
+            refuel_avg = (refuel.min + refuel.max)/2
             print("    scoopable: true")
-            print("    fuel: %d" % (refuel,))
+            print("    fuel: %d" % (refuel_avg,))
         elif scoopable == 0:
             print("    scoopable: false")
 
@@ -53,19 +54,26 @@ STARS = {
     "sagittarius": Star(6, "Sagittarius A*", 25, -20, 25899),
     "sol": Star(7, "Sol", 0, 0, 0),
     "eagle": Star(8, "Eagle Sector IR-W d1-105", -2046, 104, 6699),
-    "bucky_end": Star(10, "Myriesly RT-Z d13-3970", -397, 66, 25778)
+    "bucky_start": Star(9, "3 Capricorni", -210, -186, 342, 17, 0),
+    "bucky_end": Star(10, "Phua Aub QT-W b1-4", -100, 5, 25865),
+    "attenborough": Star(11, "Lagoon Sector FW-W d1-122", -467, -93, 4485)
 }
 
 
 def run(db):
-    #ship = Ship("DSV Phoenix (Exploration)", 578, 4, 64, "6A", 8, 2902, 10.5, 1.245)
     ship = Ship("DSV Phoenix (Bucky)", 480, 0, 64, "6A", 8, 2902, 10.5, 1.245)
+    # ship = Ship("DSV Aurora (Bucky)", 281, 0, 32, "6A", 5, 1693, 10.5, 0.878)
+    # ship = Ship("DSV Too Cheap to Ignore", 34, 0, 6, "2A", 1, 140, 6.0, 0.075)
 
     galaxy = Galaxy(db)
 
-    start = STARS["sol"]
-    goal = STARS["rohini"]
-    refuel_levels = [32, 48, 64]
+    start = STARS["bucky_start"]
+    goal = STARS["bucky_end"]
+    refuel_levels = [
+        FuelRange(28, 36),
+        FuelRange(44, 52),
+        FuelRange(64, 64),
+    ]
 
     t_start = time.time()
     path = Pathfind(ship, galaxy, start, goal, refuel_levels).run()
