@@ -61,9 +61,9 @@ STARS = {
 
 
 def run(db):
-    ship = Ship("DSV Phoenix (Bucky)", 480, 0, 64, "6A", 8, 2902, 10.5, 1.245)
+    # ship = Ship("DSV Phoenix (Bucky)", 480, 0, 128, "6A", 8, 2902, 10.5, 1.245)
     # ship = Ship("DSV Aurora (Bucky)", 281, 0, 32, "6A", 5, 1693, 10.5, 0.878)
-    # ship = Ship("DSV Too Cheap to Ignore", 34, 0, 6, "2A", 1, 140, 6.0, 0.075)
+    ship = Ship("DSV Too Cheap to Ignore", 34, 0, 6, "2A", 1, 140, 6.0, 0.075)
 
     galaxy = Galaxy(db)
 
@@ -72,7 +72,17 @@ def run(db):
     refuel_levels = [
         FuelRange(28, 36),
         FuelRange(44, 52),
-        FuelRange(64, 64),
+        FuelRange(60, 68),
+        FuelRange(76, 84),
+        FuelRange(92, 100),
+        FuelRange(108, 116),
+        FuelRange(124, 128),
+    ]
+
+    start = STARS["sol"]
+    goal = STARS["rohini"]
+    refuel_levels = [
+        FuelRange(6, 6),
     ]
 
     t_start = time.time()

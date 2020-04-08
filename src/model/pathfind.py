@@ -25,7 +25,10 @@ class Open:
 class Node:
     def __init__(self, ship, star, refuel, fuel):
         fuel_avg = (fuel.min + fuel.max)/2
-        self.id = "%s %d" % (star.id, fuel_avg/ship.max_fuel_per_jump)
+        self.id = "%s %d" % (
+            star.id,
+            int(fuel_avg/(ship.max_fuel_per_jump))
+        )
         self.star = star
         self.refuel = refuel
         self.fuel = fuel
@@ -40,7 +43,7 @@ class FuelRange:
         self.max = max
 
 
-TIME_PER_JUMP = 55
+TIME_PER_JUMP = 50
 
 
 class Pathfind:
@@ -167,7 +170,7 @@ class Pathfind:
             t_refuel = delta / self.ship.fuel_scoop_rate
 
             neighbor_fuel = refuel
-            refuel_penalty = t_travel + t_refuel
+            refuel_penalty = t_travel + t_refuel + 20
 
         g_score = self.g[current.id] + \
             TIME_PER_JUMP * num_of_jumps + refuel_penalty + neutron_penalty
@@ -201,6 +204,7 @@ class Pathfind:
             self.open.add(node, self.f[node.id])
 
         lowest_dist_to_goal = self.start.dist(self.goal)
+        lowest_time_to_goal = 0
 
         i = 0
         while self.open.any():
@@ -213,9 +217,21 @@ class Pathfind:
                 continue
 
             dist = star.dist(self.goal)
-            lowest_dist_to_goal = min(lowest_dist_to_goal, dist)
-            print("%8d %8d %9s %6d %6d   %s" %
-                  (i, len(self.open), datetime.timedelta(seconds=int(self.f[node.id])), lowest_dist_to_goal, dist, star.name))
+
+            if dist < lowest_dist_to_goal:
+                lowest_dist_to_goal = dist
+                lowest_time_to_goal = int(self.f[node.id]-self.g[node.id])
+
+            print("%8d %8d %8d %9s %9s %6d %6d   %s" % (
+                i,
+                len(self.open),
+                len(self.came_from),
+                datetime.timedelta(seconds=int(self.f[node.id])),
+                datetime.timedelta(seconds=lowest_time_to_goal),
+                lowest_dist_to_goal,
+                dist,
+                star.name
+            ))
 
             # reached goal
             if star.id == self.goal.id:
@@ -229,6 +245,11 @@ class Pathfind:
 
                 # cylinder constraint
                 if 2000 < self.distance_from_center_line(neighbor):
+                    continue
+
+                # backtracking constraint
+                neighbor_dist = neighbor.dist(self.goal)
+                if dist < neighbor_dist:
                     continue
 
                 # without refueling
