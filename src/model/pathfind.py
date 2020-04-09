@@ -149,10 +149,10 @@ class Pathfind:
         if num_of_jumps > 1:
             # fill back to full tank
             delta = self.ship.fuel_capacity - (neighbor_fuel)
-            t_fst = delta / self.ship.fuel_scoop_rate
+            t_fst = (delta / self.ship.fuel_scoop_rate) + 20
             # refill after each jump
             t_rst = (num_of_jumps - 1) * \
-                self.ship.max_fuel_per_jump / self.ship.fuel_scoop_rate
+                ((self.ship.max_fuel_per_jump / self.ship.fuel_scoop_rate) + 20)
 
             neighbor_fuel = fuel - self.ship.max_fuel_per_jump
             refuel_penalty = t_fst + t_rst
@@ -167,13 +167,13 @@ class Pathfind:
             t_travel = self.get_travel_time(neighbor.distance_to_scoopable)
             # time to refuel
             delta = refuel - neighbor_fuel
-            t_refuel = delta / self.ship.fuel_scoop_rate
+            t_refuel = (delta / self.ship.fuel_scoop_rate) + 20
 
             neighbor_fuel = refuel
-            refuel_penalty = t_travel + t_refuel + 20
+            refuel_penalty = t_travel + t_refuel
 
         g_score = self.g[current.id] + \
-            TIME_PER_JUMP * num_of_jumps + refuel_penalty + neutron_penalty
+            (TIME_PER_JUMP * num_of_jumps) + refuel_penalty + neutron_penalty
 
         return (neighbor_fuel, num_of_jumps, g_score)
 
@@ -240,7 +240,7 @@ class Pathfind:
             # direct route to goal
             self.handle_neighbor(node, self.goal, None)
 
-            neighbors = self.galaxy.get_neighbors(star, 500)
+            neighbors = self.galaxy.get_neighbors(star, 1000)
             for neighbor in neighbors:
 
                 # cylinder constraint
