@@ -44,9 +44,9 @@ class Ship:
         return m * math.pow(f, 1 / self.fsd_fuel_power) + self.guardian_bonus
 
     def get_fuel_cost(self, fuel, dist):
-        max_jump_range = self.get_max_jump_range(fuel)
+        max_range = self.get_max_jump_range(fuel)
 
-        r = max(0, max_jump_range - self.guardian_bonus)
-        n = (self.dry_mass + fuel) * dist * r
-        d = max_jump_range * self.optimised_mass
+        n = dist * max_range * (self.dry_mass + fuel)
+        d = (max_range + self.guardian_bonus) * self.optimised_mass
+
         return self.fsd_fuel_multiplier * math.pow(n / d, self.fsd_fuel_power)
