@@ -46,17 +46,17 @@ def print_path_yaml(path):
 
 
 STARS = {
-    "colonia": Star(1, "Colonia", -9530, -910, 19808),
-    "hillary_depot": Star(2, "Blu Thua AI-A c14-10", -54, 149, 2099),
-    "omega_mining": Star(3, "Omega Sector VE-Q b5-15", -1444, -85, 5319),
-    "rohini": Star(4, "Rohini", -3374, -47, 6912),
-    "sacaqawea": Star(5, "Skaudai CH-B d14-34", -5481, -579, 10429),
-    "sagittarius": Star(6, "Sagittarius A*", 25, -20, 25899),
-    "sol": Star(7, "Sol", 0, 0, 0),
-    "eagle": Star(8, "Eagle Sector IR-W d1-105", -2046, 104, 6699),
-    "bucky_start": Star(9, "3 Capricorni", -210, -186, 342, 17, 0),
-    "bucky_end": Star(10, "Phua Aub QT-W b1-4", -100, 5, 25865),
-    "attenborough": Star(11, "Lagoon Sector FW-W d1-122", -467, -93, 4485)
+    "attenborough": "Lagoon Sector FW-W d1-122",
+    "bucky_start": "3 Capricorni",
+    "bucky_end": "Phua Aub QT-W b1-4",
+    "colonia": "Colonia",
+    "eagle": "Eagle Sector IR-W d1-105",
+    "hillary_depot": "Blu Thua AI-A c14-10",
+    "omega_mining": "Omega Sector VE-Q b5-15",
+    "rohini": "Rohini",
+    "sacaqawea": "Skaudai CH-B d14-34",
+    "sagittarius": "Sagittarius A*",
+    "sol": "Sol",
 }
 
 
@@ -67,8 +67,8 @@ def run(db):
 
     galaxy = Galaxy(db)
 
-    start = STARS["bucky_start"]
-    goal = STARS["bucky_end"]
+    start = galaxy.get_by_name(STARS["bucky_start"])
+    goal = galaxy.get_by_name(STARS["bucky_end"])
     refuel_levels = [
         FuelRange(28, 36),
         FuelRange(44, 52),
@@ -79,8 +79,8 @@ def run(db):
         FuelRange(124, 128),
     ]
 
-    start = STARS["sol"]
-    goal = STARS["rohini"]
+    start = galaxy.get_by_name("Sol")
+    goal = galaxy.get_by_name(STARS["hillary_depot"])
     refuel_levels = [
         FuelRange(6, 6),
     ]

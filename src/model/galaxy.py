@@ -1,12 +1,28 @@
 import itertools
 import math
 from model.sector import Sector
+from model.star import Star
+
+
+QUERY = """
+SELECT `id`, `name`, `x`, `y`, `z`, `distanceToNeutron`, `distanceToScoopable`
+FROM `system` 
+WHERE `name`=%s
+"""
 
 
 class Galaxy:
     def __init__(self, db):
         self._db = db
         self._sectors = {}
+
+    def get_by_name(self, name):
+        cursor = self._db.cursor()
+        cursor.execute(
+            QUERY,
+            (name,)
+        )
+        return [Star(*row) for row in cursor.fetchall()][0]
 
     def get_neighbors(self, star, dist):
         sectors = self._get_sectors(star, dist)
