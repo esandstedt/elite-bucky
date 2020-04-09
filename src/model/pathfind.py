@@ -135,7 +135,7 @@ class Pathfind:
         fuel_cost = 0
         if star.distance_to_neutron is not None:
             fuel_cost = self.ship.get_fuel_cost(
-                fuel, min(jump_range, dist / 4))
+                fuel, min(jump_range / 4, dist / 4))
         else:
             fuel_cost = self.ship.get_fuel_cost(fuel, min(jump_range, dist))
 
