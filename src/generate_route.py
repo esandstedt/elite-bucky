@@ -61,9 +61,9 @@ STARS = {
 
 
 def run(db):
-    # ship = Ship("DSV Phoenix (Bucky)", 480, 0, 128, "6A", 8, 2902, 10.5, 1.245)
-    # ship = Ship("DSV Aurora (Bucky)", 281, 0, 32, "6A", 5, 1693, 10.5, 0.878)
-    ship = Ship("DSV Too Cheap to Ignore", 34, 0, 6, "2A", 1, 140, 6.0, 0.075)
+    # ship = Ship("DSV Phoenix (Bucky)", 480, 128, "6A", 8, 2902, 10.5, 1.245)
+    # ship = Ship("DSV Aurora (Bucky)", 281, 32, "6A", 5, 1693, 10.5, 0.878)
+    ship = Ship("DSV Too Cheap to Ignore", 34, 6, "2A", 1, 140, 6.0, 0.075)
 
     galaxy = Galaxy(db)
 
