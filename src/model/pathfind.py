@@ -47,12 +47,11 @@ TIME_PER_JUMP = 50
 
 
 class Pathfind:
-    def __init__(self, ship, galaxy, start, goal, refuel_levels):
+    def __init__(self, ship, galaxy, start, goal):
         self.ship = ship
         self.galaxy = galaxy
         self.start = start
         self.goal = goal
-        self.refuel_levels = refuel_levels
 
         self.came_from = {}
         self.g = defaultdict(lambda: 1000000)
@@ -142,7 +141,7 @@ class Pathfind:
         neighbor_fuel = fuel - fuel_cost
 
         # not a valid neighbor because too low fuel
-        if neighbor_fuel < 1:
+        if neighbor_fuel < self.ship.minimum_fuel:
             return None
 
         refuel_penalty = 0
@@ -192,7 +191,7 @@ class Pathfind:
         return reversed(path)
 
     def run(self):
-        for level in self.refuel_levels:
+        for level in self.ship.refuel_levels:
             node = Node(
                 self.ship,
                 self.start,
@@ -240,7 +239,7 @@ class Pathfind:
             # direct route to goal
             self.handle_neighbor(node, self.goal, None)
 
-            neighbors = self.galaxy.get_neighbors(star, 1000)
+            neighbors = self.galaxy.get_neighbors(star, 500)
             for neighbor in neighbors:
 
                 # cylinder constraint
@@ -256,7 +255,7 @@ class Pathfind:
                 self.handle_neighbor(node, neighbor, None)
                 if neighbor.distance_to_scoopable is not None:
                     # with refueling
-                    for level in self.refuel_levels:
+                    for level in self.ship.refuel_levels:
                         self.handle_neighbor(node, neighbor, level)
 
     def distance_from_center_line(self, star):

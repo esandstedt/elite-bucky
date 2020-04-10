@@ -19,17 +19,19 @@ FUEL_MULTIPLIERS = {
 
 
 class Ship:
-    def __init__(self, name, dry_mass, fuel_capacity, fsd, max_fuel_per_jump, optimised_mass, guardian_bonus, fuel_scoop_rate):
-        self.name = name
-        self.dry_mass = dry_mass
-        self.fuel_capacity = fuel_capacity
-        self.fsd = fsd
-        self.fsd_fuel_power = FUEL_POWERS[fsd[0]]
-        self.fsd_fuel_multiplier = FUEL_MULTIPLIERS[fsd[1]]
-        self.max_fuel_per_jump = max_fuel_per_jump
-        self.optimised_mass = optimised_mass
-        self.guardian_bonus = guardian_bonus
-        self.fuel_scoop_rate = fuel_scoop_rate
+    def __init__(self, params):
+        self.name = params["name"]
+        self.dry_mass = params["dry_mass"]
+        self.fuel_capacity = params["fuel_capacity"]
+        self.fsd = params["fsd"]
+        self.fsd_fuel_power = FUEL_POWERS[params["fsd"][0]]
+        self.fsd_fuel_multiplier = FUEL_MULTIPLIERS[params["fsd"][1]]
+        self.max_fuel_per_jump = params["max_fuel_per_jump"]
+        self.optimised_mass = params["optimised_mass"]
+        self.guardian_bonus = params["guardian_bonus"]
+        self.fuel_scoop_rate = params["fuel_scoop_rate"]
+        self.refuel_levels = params["refuel_levels"]
+        self.minimum_fuel = params["minimum_fuel"]
 
     def get_max_jump_range(self, fuel=None):
         if fuel is None:
