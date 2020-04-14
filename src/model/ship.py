@@ -37,18 +37,21 @@ class Ship:
         if fuel is None:
             fuel = self.fuel_capacity
 
-        # this algorithm can't handle restrictions when at low fuel so use the nuclear option
-        if fuel < self.max_fuel_per_jump:
-            return 0
-
-        m = self.optimised_mass / (self.dry_mass + fuel)
-        f = self.max_fuel_per_jump / self.fsd_fuel_multiplier
-        return m * math.pow(f, 1 / self.fsd_fuel_power) + self.guardian_bonus
+        return self._get_range(fuel, self._get_boosted_fuel_multiplier(fuel))
 
     def get_fuel_cost(self, fuel, dist):
-        max_range = self.get_max_jump_range(fuel)
+        total_mass = self.dry_mass + fuel
+        return self._get_boosted_fuel_multiplier(fuel) * math.pow(dist * total_mass / self.optimised_mass, self.fsd_fuel_power)
 
-        n = dist * max_range * (self.dry_mass + fuel)
-        d = (max_range + self.guardian_bonus) * self.optimised_mass
+    def _get_boosted_fuel_multiplier(self, fuel):
+        base_range = self._get_range(fuel)
+        return self.fsd_fuel_multiplier * math.pow(base_range / (base_range + self.guardian_bonus), self.fsd_fuel_power)
 
-        return self.fsd_fuel_multiplier * math.pow(n / d, self.fsd_fuel_power)
+    def _get_range(self, fuel, fuel_multiplier=None):
+        if fuel_multiplier is None:
+            fuel_multiplier = self.fsd_fuel_multiplier
+
+        max_fuel = min(self.max_fuel_per_jump, fuel)
+        total_mass = self.dry_mass + fuel
+
+        return (self.optimised_mass / total_mass) * math.pow(max_fuel / fuel_multiplier, 1.0 / self.fsd_fuel_power)
