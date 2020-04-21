@@ -239,7 +239,7 @@ class Pathfind:
             # direct route to goal
             self.handle_neighbor(node, self.goal, None)
 
-            neighbors = self.galaxy.get_neighbors(star, 500)
+            neighbors = self.galaxy.get_neighbors(star, 450)
             for neighbor in neighbors:
 
                 # cylinder constraint

@@ -1,6 +1,13 @@
 import gzip
+from itertools import islice
 import json
+import math
 import mysql.connector
+import os
+import sys
+
+from dotenv import load_dotenv
+load_dotenv()
 
 
 def get_existing_system_ids(cursor):
@@ -20,12 +27,9 @@ def enumerate_systems(file_path):
                 pass
 
 
-def run(cursor, systems):
-    # existing_ids = get_existing_system_ids(cursor)
-
-    c = 0
-    d = 0
-    for system in systems:
+def run(cursor, systems, index_from, index_to):
+    c = index_from
+    for system in islice(systems, index_from, index_to):
         c += 1
 
         id = system["id64"]
@@ -33,25 +37,40 @@ def run(cursor, systems):
         x = system["coords"]["x"]
         y = system["coords"]["y"]
         z = system["coords"]["z"]
-
-        # if id in existing_ids:
-        #     continue
-
-        d += 1
+        sectorX = math.floor(x/1000)
+        sectorY = math.floor(y/1000)
+        sectorZ = math.floor(z/1000)
 
         cursor.execute(
-            "INSERT IGNORE INTO `system`(`id`,`name`,`x`,`y`,`z`) VALUES (%s,%s,%s,%s,%s)",
-            (id, name, x, y, z)
+            "INSERT IGNORE INTO `system`(`id`,`name`,`x`,`y`,`z`,`sectorX`,`sectorY`,`sectorZ`) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
+            (id, name, x, y, z, sectorX, sectorY, sectorZ)
         )
 
-        if d % 1000 == 0:
-            print("%9d %9d %s" % (c, d, name))
+        print("%9d %s" % (c, name))
+
+        if c % 1000 == 0:
             db.commit()
 
     db.commit()
 
 
 if __name__ == "__main__":
+    index_from = int(sys.argv[1])
+    index_to = int(sys.argv[2])
+
+    db = mysql.connector.connect(
+        host=os.getenv("MYSQL_HOST"),
+        user=os.getenv("MYSQL_USER"),
+        passwd=os.getenv("MYSQL_PASSWD"),
+        database=os.getenv("MYSQL_DATABASE"),
+    )
+    run(
+        db.cursor(),
+        enumerate_systems("./data/systemsWithCoordinates.json.gz"),
+        index_from,
+        index_to
+    )
+    """
     db = mysql.connector.connect(
         host="localhost",
         user="elite",
@@ -60,5 +79,8 @@ if __name__ == "__main__":
     )
     run(
         db.cursor(),
-        enumerate_systems("./data/systemsWithCoordinates.json.gz")
+        enumerate_systems("./data/200419_systemsWithCoordinates7days.json.gz"),
+        0,
+        None
     )
+    """

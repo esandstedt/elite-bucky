@@ -1,6 +1,10 @@
 import gzip
 import json
 import mysql.connector
+import os
+
+from dotenv import load_dotenv
+load_dotenv()
 
 
 def enumerate_bodies(file_path):
@@ -72,6 +76,19 @@ def run(cursor, bodies):
 
 
 if __name__ == "__main__":
+    """
+    db = mysql.connector.connect(
+        host=os.getenv("MYSQL_HOST"),
+        user=os.getenv("MYSQL_USER"),
+        passwd=os.getenv("MYSQL_PASSWD"),
+        database=os.getenv("MYSQL_DATABASE"),
+    )
+    run(
+        db.cursor(),
+        enumerate_bodies("./data/bodies.json.gz")
+    )
+    """
+
     db = mysql.connector.connect(
         host="localhost",
         user="elite",
@@ -80,5 +97,5 @@ if __name__ == "__main__":
     )
     run(
         db.cursor(),
-        enumerate_bodies("./data/bodies.json.gz")
+        enumerate_bodies("./data/200419_bodies7days.json.gz"),
     )

@@ -48,27 +48,6 @@ def print_path_yaml(path):
 SHIPS = {
     "phoenix": Ship({
         "name": "DSV Phoenix (Bucky)",
-        "dry_mass": 480,
-        "fuel_capacity": 128,
-        "fsd": "6A",
-        "max_fuel_per_jump": 8,
-        "optimised_mass": 2902,
-        "guardian_bonus": 10.5,
-        "fuel_scoop_rate": 1.245,
-        "refuel_levels": [
-            FuelRange(12, 20),
-            FuelRange(28, 36),
-            FuelRange(44, 52),
-            FuelRange(60, 68),
-            FuelRange(76, 84),
-            FuelRange(92, 100),
-            FuelRange(108, 116),
-            FuelRange(124, 128),
-        ],
-        "minimum_fuel": 1
-    }),
-    "phoenix_2": Ship({
-        "name": "DSV Phoenix (Bucky)",
         "dry_mass": 482,
         "fuel_capacity": 128,
         "fsd": "6A",
@@ -90,13 +69,27 @@ SHIPS = {
     }),
     "aurora": Ship({
         "name": "DSV Aurora (Bucky)",
-        "dry_mass": 281,
+        "dry_mass": 318,
+        "fuel_capacity": 48,
+        "fsd": "5A",
+        "max_fuel_per_jump": 5,
+        "optimised_mass": 1692.6,
+        "guardian_bonus": 10.5,
+        "fuel_scoop_rate": 0.878,
+        "refuel_levels": [
+            FuelRange(48, 48),
+        ],
+        "minimum_fuel": 1
+    }),
+    "aura": Ship({
+        "name": "DSV Aura (Bucky)",
+        "dry_mass": 297,
         "fuel_capacity": 32,
         "fsd": "5A",
         "max_fuel_per_jump": 5,
-        "optimised_mass": 1693,
-        "guardian_bonus": 10.5,
-        "fuel_scoop_rate": 0.878,
+        "optimised_mass": 1692.6,
+        "guardian_bonus": 9.3,
+        "fuel_scoop_rate": 0.342,
         "refuel_levels": [
             FuelRange(32, 32),
         ],
@@ -136,11 +129,11 @@ STARS = {
 
 def run(db):
 
-    ship = SHIPS["phoenix_2"]
+    ship = SHIPS["phoenix"]
 
     galaxy = Galaxy(db)
 
-    start = galaxy.get_by_name("Graea Hypue HC-M d7-9")
+    start = galaxy.get_by_name("Sol")
     goal = galaxy.get_by_name("Sagittarius A*")
 
     t_start = time.time()
