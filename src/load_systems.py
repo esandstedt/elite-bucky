@@ -55,6 +55,7 @@ def run(cursor, systems, index_from, index_to):
 
 
 if __name__ == "__main__":
+    """
     index_from = int(sys.argv[1])
     index_to = int(sys.argv[2])
 
@@ -79,8 +80,7 @@ if __name__ == "__main__":
     )
     run(
         db.cursor(),
-        enumerate_systems("./data/200419_systemsWithCoordinates7days.json.gz"),
+        enumerate_systems("./data/200425_systemsWithCoordinates7days.json.gz"),
         0,
         None
     )
-    """

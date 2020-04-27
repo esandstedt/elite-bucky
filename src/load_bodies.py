@@ -56,10 +56,9 @@ def run(cursor, bodies):
                 "UPDATE `system` SET `distanceToNeutron`=%s WHERE `id`=%s AND (`distanceToNeutron` IS NULL OR %s<`distanceToNeutron`)",
                 (distance_to_arrival, system_id, distance_to_arrival)
             )
-
+            print("%9d Neutron   %s" % (d, name))
             if d % 1000 == 0:
                 db.commit()
-                print("%9d %9d %s" % (c, d, name))
 
         elif is_scoopable and within_distance:
             d += 1
@@ -67,10 +66,9 @@ def run(cursor, bodies):
                 "UPDATE `system` SET `distanceToScoopable`=%s WHERE `id`=%s AND (`distanceToScoopable` IS NULL OR %s<`distanceToScoopable`)",
                 (distance_to_arrival, system_id, distance_to_arrival)
             )
-
+            print("%9d Scoopable %s" % (d, name))
             if d % 1000 == 0:
                 db.commit()
-                print("%9d %9d %s" % (c, d, name))
 
     db.commit()
 
@@ -97,5 +95,5 @@ if __name__ == "__main__":
     )
     run(
         db.cursor(),
-        enumerate_bodies("./data/200419_bodies7days.json.gz"),
+        enumerate_bodies("./data/200425_bodies7days.json.gz"),
     )
