@@ -115,28 +115,33 @@ class Pathfind:
         star = current.star
 
         jump_range = self.ship.get_max_jump_range(fuel)
+
+        jump_factor = 1
         neutron_penalty = 0
         if star.distance_to_neutron is not None:
-            jump_range = 4*jump_range
+            jump_factor = 4
             # time to travel to neutron star
             neutron_penalty = self.get_travel_time(
                 star.distance_to_neutron)
+        else:
+            jump_factor = 2
 
         if jump_range == 0:
             return
 
         dist = star.dist(neighbor)
 
+        remaining_jump_factor = 2
         remaining_jump_range = self.ship.get_max_jump_range()
-        remaining_dist = max(0, dist - jump_range)
-        num_of_jumps = 1 + math.ceil(remaining_dist / remaining_jump_range)
+        remaining_dist = max(0, dist - (jump_factor*jump_range))
+        num_of_jumps = 1 + math.ceil(
+            remaining_dist / (remaining_jump_factor * remaining_jump_range)
+        )
 
-        fuel_cost = 0
-        if star.distance_to_neutron is not None:
-            fuel_cost = self.ship.get_fuel_cost(
-                fuel, min(jump_range / 4, dist / 4))
-        else:
-            fuel_cost = self.ship.get_fuel_cost(fuel, min(jump_range, dist))
+        fuel_cost = self.ship.get_fuel_cost(
+            fuel,
+            min(jump_range, dist / jump_factor)
+        )
 
         neighbor_fuel = fuel - fuel_cost
 
