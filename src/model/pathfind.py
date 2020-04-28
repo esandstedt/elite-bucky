@@ -146,17 +146,25 @@ class Pathfind:
 
         refuel_penalty = 0
         if num_of_jumps > 1:
-            # fill back to full tank
-            delta = self.ship.fuel_capacity - (neighbor_fuel)
+            # use max level when no refuel is provided
+            if refuel is None:
+                refuel = self.ship.fuel_capacity
+
+            # can't refuel below the current level
+            if refuel < neighbor_fuel:
+                return None
+
+            # fill up to refuel level
+            delta = refuel - (neighbor_fuel)
             t_fst = (delta / self.ship.fuel_scoop_rate) + 20
             # refill after each jump
             t_rst = (num_of_jumps - 1) * \
                 ((self.ship.max_fuel_per_jump / self.ship.fuel_scoop_rate) + 20)
 
-            neighbor_fuel = fuel - self.ship.max_fuel_per_jump
+            neighbor_fuel = refuel - self.ship.max_fuel_per_jump
             refuel_penalty = t_fst + t_rst
 
-        if refuel is not None:
+        elif refuel is not None:
 
             # can't refuel below the current level
             if refuel < neighbor_fuel:
