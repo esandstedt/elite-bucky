@@ -83,7 +83,7 @@ if __name__ == "__main__":
     )
     run(
         db.cursor(),
-        enumerate_bodies("./data/bodies.json.gz")
+        enumerate_bodies(os.getenv("BODIES_PATH")),
     )
     """
 
@@ -95,5 +95,5 @@ if __name__ == "__main__":
     )
     run(
         db.cursor(),
-        enumerate_bodies("./data/200425_bodies7days.json.gz"),
+        enumerate_bodies(os.getenv("BODIES_PATH")),
     )

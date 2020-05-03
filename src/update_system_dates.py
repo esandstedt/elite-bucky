@@ -1,21 +1,11 @@
 import datetime
 import gzip
-from itertools import islice
 import json
-import math
 import mysql.connector
 import os
-import sys
 
 from dotenv import load_dotenv
 load_dotenv()
-
-
-def get_existing_system_ids(cursor):
-    cursor.execute(
-        "SELECT `id` FROM `system`"
-    )
-    return set([x[0] for x in cursor.fetchall()])
 
 
 def enumerate_systems(file_path):
@@ -28,28 +18,26 @@ def enumerate_systems(file_path):
                 pass
 
 
-def run(cursor, systems, index_from, index_to):
-    c = index_from
-    for system in islice(systems, index_from, index_to):
+def run(cursor, systems):
+    c = 0
+    for system in systems:
         c += 1
 
         id = system["id64"]
-        name = system["name"]
-        x = system["coords"]["x"]
-        y = system["coords"]["y"]
-        z = system["coords"]["z"]
-        sectorX = math.floor(x/1000)
-        sectorY = math.floor(y/1000)
-        sectorZ = math.floor(z/1000)
         date = datetime.datetime.fromisoformat(
             system["date"]).date().isoformat()
+        name = system["name"]
+
+        print("%8d %9s %s" % (
+            c,
+            date,
+            name
+        ))
 
         cursor.execute(
-            "INSERT IGNORE INTO `system`(`id`,`name`,`x`,`y`,`z`,`sectorX`,`sectorY`,`sectorZ`,`date`) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)",
-            (id, name, x, y, z, sectorX, sectorY, sectorZ, date)
+            "UPDATE `system` SET `date`=%s WHERE `id`=%s",
+            (date, id)
         )
-
-        print("%9d %s" % (c, name))
 
         if c % 1000 == 0:
             db.commit()
@@ -59,9 +47,6 @@ def run(cursor, systems, index_from, index_to):
 
 if __name__ == "__main__":
     """
-    index_from = int(sys.argv[1])
-    index_to = int(sys.argv[2])
-
     db = mysql.connector.connect(
         host=os.getenv("MYSQL_HOST"),
         user=os.getenv("MYSQL_USER"),
@@ -71,8 +56,6 @@ if __name__ == "__main__":
     run(
         db.cursor(),
         enumerate_systems(os.genenv("SYSTEMS_PATH"))
-        index_from,
-        index_to
     )
     """
     db = mysql.connector.connect(
@@ -84,6 +67,4 @@ if __name__ == "__main__":
     run(
         db.cursor(),
         enumerate_systems(os.genenv("SYSTEMS_PATH"))
-        0,
-        None
     )
