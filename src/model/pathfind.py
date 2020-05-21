@@ -23,7 +23,7 @@ class Open:
 
 
 class Node:
-    def __init__(self, ship, star, refuel, fuel):
+    def __init__(self, ship, star, num_of_jumps, refuel,  fuel):
         fuel_avg = (fuel.min + fuel.max)/2
         self.id = "%s %d" % (
             star.id,
@@ -31,6 +31,7 @@ class Node:
         )
         self.star = star
         self.refuel = refuel
+        self.num_of_jumps = num_of_jumps
         self.fuel = fuel
 
     def __lt__(self, other):
@@ -94,6 +95,7 @@ class Pathfind:
         neighbor_node = Node(
             self.ship,
             neighbor,
+            num_of_jumps_min,
             refuel,
             FuelRange(
                 neighbor_fuel_min,
@@ -117,21 +119,21 @@ class Pathfind:
         jump_range = self.ship.get_max_jump_range(fuel)
 
         jump_factor = 1
-        neutron_penalty = 0
+        boost_penalty = 0
         if star.distance_to_neutron is not None:
             jump_factor = 4
             # time to travel to neutron star
-            neutron_penalty = self.get_travel_time(
+            boost_penalty = self.get_travel_time(
                 star.distance_to_neutron)
         else:
-            jump_factor = 2
+            jump_factor = 1
 
         if jump_range == 0:
             return
 
         dist = star.dist(neighbor)
 
-        remaining_jump_factor = 2
+        remaining_jump_factor = 1
         remaining_jump_range = self.ship.get_max_jump_range()
         remaining_dist = max(0, dist - (jump_factor*jump_range))
         num_of_jumps = 1 + math.ceil(
@@ -151,16 +153,17 @@ class Pathfind:
 
         refuel_penalty = 0
         if num_of_jumps > 1:
-            # use max level when no refuel is provided
+
+            # must refuel
             if refuel is None:
-                refuel = self.ship.fuel_capacity
+                return None
 
             # can't refuel below the current level
             if refuel < neighbor_fuel:
                 return None
 
             # fill up to refuel level
-            delta = refuel - (neighbor_fuel)
+            delta = refuel - neighbor_fuel
             t_fst = (delta / self.ship.fuel_scoop_rate) + 20
             # refill after each jump
             t_rst = (num_of_jumps - 1) * \
@@ -170,6 +173,10 @@ class Pathfind:
             refuel_penalty = t_fst + t_rst
 
         elif refuel is not None:
+
+            # must be scoopable
+            if neighbor.distance_to_scoopable is None:
+                return None
 
             # can't refuel below the current level
             if refuel < neighbor_fuel:
@@ -185,8 +192,7 @@ class Pathfind:
             refuel_penalty = t_travel + t_refuel
 
         g_score = self.g[current.id] + \
-            (TIME_PER_JUMP * num_of_jumps) + refuel_penalty + neutron_penalty
-
+            (TIME_PER_JUMP * num_of_jumps) + refuel_penalty + boost_penalty
         return (neighbor_fuel, num_of_jumps, g_score)
 
     def get_travel_time(self, distance):
@@ -208,6 +214,7 @@ class Pathfind:
             node = Node(
                 self.ship,
                 self.start,
+                0,
                 level,
                 level
             )
@@ -215,8 +222,9 @@ class Pathfind:
             self.f[node.id] = self.h(node)
             self.open.add(node, self.f[node.id])
 
-        lowest_dist_to_goal = self.start.dist(self.goal)
-        lowest_time_to_goal = 0
+        closest_node = None
+        closest_dist_to_goal = self.start.dist(self.goal)
+        closest_time_to_goal = 0
 
         i = 0
         while self.open.any():
@@ -230,17 +238,23 @@ class Pathfind:
 
             dist = star.dist(self.goal)
 
-            if dist < lowest_dist_to_goal:
-                lowest_dist_to_goal = dist
-                lowest_time_to_goal = int(self.f[node.id]-self.g[node.id])
+            # straggler constraint
+            # if closest_dist_to_goal + 3000 < dist:
+            #     continue
 
-            print("%8d %8d %8d %9s %9s %6d %6d   %s" % (
+            if dist < closest_dist_to_goal:
+                closest_node = node
+                closest_dist_to_goal = dist
+                closest_time_to_goal = int(self.f[node.id]-self.g[node.id])
+
+            print("%8d %8d %8d %9s %9s %6d %9s %6d   %s" % (
                 i,
                 len(self.open),
                 len(self.came_from),
                 datetime.timedelta(seconds=int(self.f[node.id])),
-                datetime.timedelta(seconds=lowest_time_to_goal),
-                lowest_dist_to_goal,
+                datetime.timedelta(seconds=closest_time_to_goal),
+                closest_dist_to_goal,
+                datetime.timedelta(seconds=int(self.g[node.id])),
                 dist,
                 star.name
             ))
@@ -250,9 +264,18 @@ class Pathfind:
                 return self.reconstruct_path(node)
 
             # direct route to goal
-            self.handle_neighbor(node, self.goal, None)
+            if dist < 5000:
+                self.handle_neighbor(node, self.goal, None)
+                self.handle_neighbor(
+                    node,
+                    self.goal,
+                    FuelRange(
+                        self.ship.fuel_capacity,
+                        self.ship.fuel_capacity
+                    )
+                )
 
-            neighbors = self.galaxy.get_neighbors(star, 500)
+            neighbors = self.galaxy.get_neighbors(star, 1000)
             for neighbor in neighbors:
 
                 # cylinder constraint
@@ -266,10 +289,13 @@ class Pathfind:
 
                 # without refueling
                 self.handle_neighbor(node, neighbor, None)
-                if neighbor.distance_to_scoopable is not None:
-                    # with refueling
-                    for level in self.ship.refuel_levels:
-                        self.handle_neighbor(node, neighbor, level)
+
+                # with refueling
+                for level in self.ship.refuel_levels:
+                    self.handle_neighbor(node, neighbor, level)
+
+        # couldn't calculate a route to the goal, so show route to the closest
+        self.reconstruct_path(closest_node)
 
     def distance_from_center_line(self, star):
 

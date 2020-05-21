@@ -1,6 +1,7 @@
 /.vscode/
 /data/
 neutrons.json
+.route
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

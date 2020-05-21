@@ -24,12 +24,13 @@ def print_path(path):
         print("%s [%s;%s]" % (name, coords, ",".join(types)))
 
 
-def print_path_yaml(path):
+def print_path_yaml(ship, path):
     print("route:")
     for node in path:
         star = node.star
         neutron = star.distance_to_neutron
         scoopable = star.distance_to_scoopable
+        num_of_jumps = node.num_of_jumps
         refuel = node.refuel
 
         print("  - name: %s" % (star.name,))
@@ -39,8 +40,11 @@ def print_path_yaml(path):
 
         if refuel is not None:
             refuel_avg = (refuel.min + refuel.max)/2
-            print("    scoopable: true")
-            print("    fuel: %d" % (refuel_avg,))
+            if num_of_jumps > 1:
+                print("    fuel: %d" % (refuel_avg - ship.max_fuel_per_jump,))
+            else:
+                print("    scoopable: true")
+                print("    fuel: %d" % (refuel_avg,))
         elif scoopable == 0:
             print("    scoopable: false")
 
@@ -49,16 +53,16 @@ SHIPS = {
     "phoenix": Ship({
         "name": "DSV Phoenix (Bucky)",
         "dry_mass": 482,
-        "fuel_capacity": 128,
+        "fuel_capacity": 64,
         "fsd": "6A",
         "max_fuel_per_jump": 8,
         "optimised_mass": 2902,
         "guardian_bonus": 10.5,
         "fuel_scoop_rate": 1.245,
         "refuel_levels": [
-            FuelRange(12, 20),
-            FuelRange(28, 36),
-            FuelRange(44, 52),
+            #FuelRange(12, 20),
+            #FuelRange(28, 36),
+            #FuelRange(44, 52),
             FuelRange(60, 68),
             FuelRange(76, 84),
             FuelRange(92, 100),
@@ -68,16 +72,16 @@ SHIPS = {
         "minimum_fuel": 1
     }),
     "aurora": Ship({
-        "name": "DSV Aurora (Bucky)",
-        "dry_mass": 318,
-        "fuel_capacity": 48,
+        "name": "DSV Aurora (Exploration)",
+        "dry_mass": 340,
+        "fuel_capacity": 32,
         "fsd": "5A",
         "max_fuel_per_jump": 5,
         "optimised_mass": 1692.6,
         "guardian_bonus": 10.5,
         "fuel_scoop_rate": 0.878,
         "refuel_levels": [
-            FuelRange(48, 48),
+            FuelRange(32, 32),
         ],
         "minimum_fuel": 1
     }),
@@ -96,7 +100,7 @@ SHIPS = {
         "minimum_fuel": 1
     }),
     "sidewinder": Ship({
-        "name": "DSV Too Cheap to Ignore",
+        "name": "BBV Neutrino",
         "dry_mass": 34,
         "fuel_capacity": 6,
         "fsd": "2A",
@@ -134,19 +138,21 @@ def run(db):
     galaxy = Galaxy(db)
 
     start = galaxy.get_by_name("Sol")
-    goal = galaxy.get_by_name("Sagittarius A*")
+    goal = galaxy.get_by_name("Rohini")
 
     t_start = time.time()
     path = Pathfind(ship, galaxy, start, goal).run()
     t_end = time.time()
 
-    print()
-    print_path_yaml(path)
+    if path is not None:
+        t_delta = datetime.timedelta(seconds=t_end-t_start)
 
-    t_delta = datetime.timedelta(seconds=t_end-t_start)
-
-    print()
-    print("time: " + str(t_delta))
+        print()
+        print_path_yaml(ship, path)
+        print()
+        print("time: " + str(t_delta))
+    else:
+        print("Could not generate route")
 
 
 if __name__ == "__main__":

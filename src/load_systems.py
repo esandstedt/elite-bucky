@@ -61,18 +61,13 @@ if __name__ == "__main__":
     """
     index_from = int(sys.argv[1])
     index_to = int(sys.argv[2])
+    """
 
     db = mysql.connector.connect(
         host=os.getenv("MYSQL_HOST"),
         user=os.getenv("MYSQL_USER"),
         passwd=os.getenv("MYSQL_PASSWD"),
         database=os.getenv("MYSQL_DATABASE"),
-    )
-    run(
-        db.cursor(),
-        enumerate_systems(os.genenv("SYSTEMS_PATH"))
-        index_from,
-        index_to
     )
     """
     db = mysql.connector.connect(
@@ -81,9 +76,10 @@ if __name__ == "__main__":
         passwd="elite",
         database="elite"
     )
+    """
     run(
         db.cursor(),
-        enumerate_systems(os.genenv("SYSTEMS_PATH"))
+        enumerate_systems(os.getenv("SYSTEMS_PATH")),
         0,
         None
     )

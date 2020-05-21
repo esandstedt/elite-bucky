@@ -81,12 +81,7 @@ if __name__ == "__main__":
         passwd=os.getenv("MYSQL_PASSWD"),
         database=os.getenv("MYSQL_DATABASE"),
     )
-    run(
-        db.cursor(),
-        enumerate_bodies(os.getenv("BODIES_PATH")),
-    )
     """
-
     db = mysql.connector.connect(
         host="localhost",
         user="elite",
